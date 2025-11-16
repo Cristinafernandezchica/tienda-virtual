@@ -1,0 +1,28 @@
+Hola {{ pedido.nombre_cliente }},
+
+Tu pedido Nº{{ pedido.id }} ha sido recibido correctamente y se encuentra en estado: {{ pedido.estado }}.
+
+Fecha del pedido: {{ pedido.fechaPedido|date:"d M Y H:i" }}
+
+{% if pedido.tipoEntrega == "Domicilio" %}
+Dirección de entrega:
+{{ pedido.dirEntrega.direccion }}
+{{ pedido.dirEntrega.codigoPostal }} - {{ pedido.dirEntrega.ciudad }} - {{ pedido.dirEntrega.pais }}
+{% else %}
+Punto de recogida:
+{{ pedido.puntoRecogida.direccion }}
+{{ pedido.puntoRecogida.codigoPostal }} - {{ pedido.puntoRecogida.ciudad }} - {{ pedido.puntoRecogida.pais }}
+Horario: {{ pedido.puntoRecogida.horario }}
+{% endif %}
+
+Productos:
+{% for item in pedido.cesta_asociada.producto_cestas.all %}
+- {{ item.producto.nombre }} x {{ item.cantidad }} => {{ item.subtotal }} €
+{% endfor %}
+
+Importe total: {{ pedido.importe }} €
+
+Puedes ver todos los detalles y el estado actualizado de tu pedido en el siguiente enlace:
+{{ pedido_url }}
+
+Gracias por confiar en Green Garden.

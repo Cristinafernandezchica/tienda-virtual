@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Pedido #{{ pedido.id }} | Admin{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+  <h2 class="text-navbar fw-bold mb-4">Pedido #{{ pedido.id }}</h2>
+
+  <div class="card shadow-sm p-4">
+
+    <!-- Datos del cliente -->
+    <h4 class="h5 text-secondary border-bottom pb-2 mb-3">Datos del Cliente</h4>
+    <p><strong>Nombre:</strong> {{ pedido.nombre_cliente }} {{ pedido.apellidos_cliente }}</p>
+    <p><strong>Email:</strong> {{ pedido.email_cliente }}</p>
+
+    <!-- Detalles del pedido -->
+    <h4 class="h5 text-secondary border-bottom pb-2 mb-3 mt-4">Detalles del Pedido</h4>
+    <p><strong>Fecha:</strong> {{ pedido.fechaPedido|date:"d/m/Y H:i" }}</p>
+    <p><strong>Importe:</strong> <span class="text-success fw-semibold">{{ pedido.importe }} €</span></p>
+
+    <!-- Productos -->
+    <h4 class="h5 text-secondary border-bottom pb-2 mb-3 mt-4">Productos</h4>
+    <ul class="list-group list-group-flush">
+      {% for item in pedido.cesta_asociada.producto_cestas.all %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ item.producto.nombre }} (x{{ item.cantidad }})</span>
+        <span class="fw-semibold">{{ item.importe }} €</span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <!-- Estado del pedido -->
+    <h4 class="h5 text-secondary border-bottom pb-2 mb-3 mt-4">Estado del Pedido</h4>
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-6">
+        <select name="estado" class="form-select">
+          {% for clave, nombre in Estados.choices %}
+          <option value="{{ clave }}" {% if pedido.estado == clave %}selected{% endif %}>
+              {{ nombre }}
+          </option>
+
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6 d-grid">
+        <button class="btn btn-success fw-semibold" type="submit">
+          Actualizar Estado
+        </button>
+      </div>
+    </form>
+
+    <!-- Volver -->
+    <div class="mt-4">
+      <a href="{% url 'cesta:lista_pedidos_admin' %}" class="btn btn-outline-secondary">
+        ← Volver al listado
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

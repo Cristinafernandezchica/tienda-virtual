@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Registrarse | Green Garden{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h3 class="text-black fw-bold mb-4 text-center">Crear cuenta</h3>
+
+    <div class="card shadow-sm rounded-4 bg-light">
+        <div class="card-body p-4">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-3">
+                    {% for field in form %}
+                        {% if field.name == 'rol' %}
+                            <div class="col-12">
+                                <label class="form-label text-navbar fw-semibold">{{ field.label }}</label>
+                                <div class="d-flex gap-3">
+                                    {% for radio in field %}
+                                        <div class="form-check">
+                                            {{ radio.tag }}
+                                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                                {{ radio.choice_label }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-md-6">
+                                <label for="{{ field.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-outline-navbar w-100 fw-semibold mt-4">
+                    <i class="bi bi-person-plus"></i> Registrarse
+                </button>
+            </form>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

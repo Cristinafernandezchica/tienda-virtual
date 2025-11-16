@@ -1,0 +1,87 @@
+/* Tarjeta de producto */
+.card.h-100.shadow-sm.border-0.hover-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Hover elegante */
+.card.h-100.shadow-sm.border-0.hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* Imagen del producto */
+.card-img-top {
+    height: 180px;            
+    object-fit: cover;         
+    border-radius: 8px 8px 0 0;
+}
+
+/* Fallback sin imagen */
+.sin-imagen {
+    height: 180px;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+/* Título */
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Texto de vendidos */
+.card-text {
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+}
+
+/* Badge de categoría */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.4em 0.6em;
+    border-radius: 6px;
+}
+
+/* Botón */
+.card-footer .btn {
+    font-size: 0.85rem;
+    padding: 0.4em 0.8em;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+/* Botón hover */
+.card-footer .btn:hover {
+    transform: scale(1.05);
+}
+
+/* Colores personalizados coherentes con el navbar */
+.text-primary-custom {
+    color: #0d3b66 !important;
+}
+
+.btn-primary-custom {
+    background-color: #0d3b66;
+    color: #fff;
+    border: none;
+}
+
+.btn-primary-custom:hover {
+    background-color: #0b3155; /* tono más oscuro al pasar el ratón */
+}
+
+/* Botón outline con color personalizado */
+.btn-outline-primary-custom {
+    color: #0d3b66;
+    border: 1px solid #0d3b66;
+    background-color: transparent;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary-custom:hover {
+    background-color: #0d3b66;
+    color: #fff;
+}

@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Editar Producto | Green Garden{% else %}Crear Producto | Green Garden{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm rounded-4 bg-light">
+                <div class="card-body p-4">
+                    <!-- Título -->
+                    <h4 class="text-navbar fw-semibold mb-4 text-center">
+                        {% if form.instance.pk %}
+                            Editar Producto: {{ form.instance.nombre }}
+                        {% else %}
+                            Nuevo Producto
+                        {% endif %}
+                    </h4>
+
+                    <!-- Formulario -->
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger rounded-3 mb-3">
+                                <strong>Errores del formulario:</strong>
+                                <ul class="mb-0">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Nombre y Precio -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.nombre.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.nombre.label }}
+                                </label>
+                                {{ form.nombre }}
+                                {% for error in form.nombre.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.precio.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.precio.label }}
+                                </label>
+                                {{ form.precio }}
+                                {% for error in form.precio.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Categoría y Stock -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.categoria.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.categoria.label }}
+                                </label>
+                                {{ form.categoria }}
+                                {% for error in form.categoria.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.stock.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.stock.label }}
+                                </label>
+                                {{ form.stock }}
+                                {% for error in form.stock.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Descripción ocupa todo el ancho -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-12">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.descripcion.label }}
+                                </label>
+                                {{ form.descripcion }}
+                                {% for error in form.descripcion.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Imagen y Fabricante -->
+                        <div class="row g-3 mt-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.imagen.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.imagen.label }}
+                                </label>
+                                {{ form.imagen }}
+                                {% for error in form.imagen.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fabricante.id_for_label }}" class="form-label text-navbar fw-semibold">
+                                    {{ form.fabricante.label }}
+                                </label>
+                                {{ form.fabricante }}
+                                {% for error in form.fabricante.errors %}
+                                    <div class="text-danger small mt-1">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                            <a href="{% url 'productos:gestion_productos' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver a Gestión
+                            </a>
+                            <button type="submit" class="btn btn-outline-navbar fw-semibold">
+                                <i class="bi bi-save"></i>
+                                {% if form.instance.pk %}Guardar Cambios{% else %}Crear Producto{% endif %}
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

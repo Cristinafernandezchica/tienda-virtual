@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Añadir Dirección | Green Garden{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h3 class="text-dark fw-bold mb-4 text-center">Añadir Dirección</h3>
+    
+    <div class="card shadow-sm rounded-4 bg-light">
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="set_preferida" id="set_preferida">
+                    <label class="form-check-label" for="set_preferida">
+                        Marcar como dirección preferida
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-outline-navbar w-100 fw-semibold">
+                    Guardar Dirección
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

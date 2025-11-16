@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Catálogo | Green Garden{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- SECCIÓN DE BÚSQUEDA -->
+<!--
+    <div class="mb-3 p-3 rounded-3 shadow-sm bg-white">
+        <form method="GET" action="{% url 'catalogo' %}">
+            <div class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o descripción..." value="{{ query|default_if_none:'' }}">
+                <button class="btn btn-lupa" type="submit"></button>
+            </div>
+        </form>
+    </div>
+-->
+    <!-- SECCIÓN DE FILTROS -->
+    <div class="mb-4 p-3 rounded-3 shadow-sm bg-light">
+        <form method="GET" action="{% url 'catalogo' %}">
+            <div class="row g-3 align-items-end">
+                <!-- Precio mínimo -->
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold text-navbar">Precio Mín.</label>
+                    <input type="number" name="precio_min" class="form-control" step="0.01" value="{{ precio_min|default_if_none:'' }}" min="0">
+                </div>
+
+                <!-- Precio máximo -->
+                <div class="col-md-2">
+                    <label class="form-label fw-semibold text-navbar">Precio Máx.</label>
+                    <input type="number" name="precio_max" class="form-control" step="0.01" value="{{ precio_max|default_if_none:'' }}" min="0">
+                </div>
+
+                <!-- Categoría -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-navbar">Categoría</label>
+                    <select name="categoria" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todas</option>
+                        {% for cat in categorias %}
+                            <option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == categoria_seleccionada %}selected{% endif %}>
+                                {{ cat.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Orden -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold text-navbar">Ordenar por</label>
+                    <select name="orden" class="form-select" onchange="this.form.submit()">
+                        <option value="" {% if not orden_seleccionado %}selected{% endif %}>Por defecto</option>
+                        <option value="precio_asc" {% if orden_seleccionado == 'precio_asc' %}selected{% endif %}>Precio ↑</option>
+                        <option value="precio_desc" {% if orden_seleccionado == 'precio_desc' %}selected{% endif %}>Precio ↓</option>
+                        <option value="nombre_asc" {% if orden_seleccionado == 'nombre_asc' %}selected{% endif %}>Nombre A-Z</option>
+                        <option value="nombre_desc" {% if orden_seleccionado == 'nombre_desc' %}selected{% endif %}>Nombre Z-A</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="row mt-3">
+                <div class="col-6">
+                    <button type="submit" class="btn btn-outline-navbar w-100">Aplicar</button>
+                </div>
+                <div class="col-6">
+                    <a href="{% url 'catalogo' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    
+    <!-- RESULTADOS DE PRODUCTOS -->
+    {% if productos %}
+        <h3 class="mb-4 text-secondary fs-6">Mostrando {{ productos.count }} producto{{ productos.count|pluralize }}</h3>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for producto in productos %}
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 rounded-3 product-card-hover">
+                    {% if producto.imagen %}
+                        <img src="{{ producto.imagen.url }}" class="card-img-top object-fit-cover" alt="{{ producto.nombre }}" style="height: 200px;">
+                    {% else %}
+                        <div class="card-img-top bg-light text-center d-flex align-items-center justify-content-center" style="height: 200px; color: #6c757d;">
+                            [Imagen No Disponible]
+                        </div>
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title text-black fw-bold">{{ producto.nombre }}</h5>
+                        <p class="card-text"><span class="badge badge-navbar">{{ producto.categoria.nombre }}</span></p>
+                        <p class="card-text flex-grow-1">{{ producto.descripcion|truncatewords:15 }}</p>
+                        <h4 class="fw-bolder precio-prod mb-3">{{ producto.precio|floatformat:2 }} €</h4>
+                        <a href="{% url 'productos:ficha_producto' producto.id %}" class="btn badge-navbar mt-auto">Ver Detalles</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+            No se encontraron productos que coincidan con los criterios de búsqueda o filtrado.
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock content %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Pago Exitoso" %}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-success">
+        <div class="card-body text-center p-5">
+            <h1 class="text-success mb-4">{% translate "¡Pago Realizado con Éxito!" %} ✅</h1>
+            <p class="lead">{% translate "Gracias por tu pedido. Hemos recibido tu pago y tu compra está siendo procesada." %}</p>
+
+            <div class="bg-light p-3 rounded mt-4 mb-4 text-start">
+                <h5 class="text-secondary border-bottom pb-2">{% translate "Resumen del Pedido" %}</h5>
+                <p><strong>{% translate "Número de Pedido" %}:</strong> {{ pedido.id }}</p>
+                <p><strong>{% translate "Total Pagado" %}:</strong> <span class="text-success fs-4">{{ pedido.importe }} €</span></p>
+                <p><strong>{% translate "Estado" %}:</strong> {{ pedido.estado }}</p>
+                <p class="small text-muted">{% translate "Recibirás un correo electrónico de confirmación con los detalles." %}</p>
+            </div>
+
+            <a href="{% url 'inicio' %}" class="btn btn-primary btn-lg">
+                {% translate "Volver a la Página Principal" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

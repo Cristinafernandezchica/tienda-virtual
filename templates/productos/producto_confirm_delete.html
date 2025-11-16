@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Producto | Gestión{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white text-center">
+                    <h3 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Eliminación</h3>
+                </div>
+                <div class="card-body p-4">
+                    <p class="fs-5 text-center mb-4">
+                        ¿Estás seguro de que deseas eliminar permanentemente el producto: 
+                        <strong class="text-danger">"{{ object.nombre }}"</strong>?
+                    </p>
+                    <p class="text-muted text-center small">
+                        Esta acción es irreversible y eliminará todos los datos asociados al producto.
+                    </p>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <button type="submit" class="btn btn-danger btn-lg px-4">
+                                Sí, Eliminar Producto
+                            </button>
+                            
+                            <a href="{% url 'productos:gestion_productos' %}" class="btn btn-outline-secondary btn-lg px-4">
+                                Cancelar y Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

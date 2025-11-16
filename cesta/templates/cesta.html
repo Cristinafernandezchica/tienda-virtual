@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Cesta | Green Garden{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="text-dark fw-bold mb-4 text-center">Tu cesta</h2>
+
+    {% if cesta.productos.exists %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle shadow-sm rounded-3 overflow-hidden">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">Producto</th>
+                        <th scope="col" class="text-end">Precio</th>
+                        <th scope="col" class="text-center">Cantidad</th>
+                        <th scope="col" class="text-center">Editar</th>
+                        <th scope="col" class="text-end">Subtotal</th>
+                        <th scope="col" class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for linea in cesta.producto_cestas.all %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if linea.producto.imagen %}
+                                        <img src="{{ linea.producto.imagen.url }}" alt="{{ linea.producto.nombre }}" 
+                                             class="rounded-3 shadow-sm" style="width:64px;height:64px;object-fit:cover;">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center bg-light text-muted rounded-3" 
+                                             style="width:64px;height:64px;">No img</div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ linea.producto.nombre }}</strong><br>
+                                        <span class="badge badge-navbar">{{ linea.producto.categoria.nombre }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-end">{{ linea.producto.precio }} €</td>
+                            <td class="text-center">{{ linea.cantidad }}</td>
+                            <td class="text-center">
+								<div class="d-flex gap-2 justify-content-center">
+									<form action="{% url 'quitar_1de_cesta' linea.producto.id %}" method="post" class="flex-fill">
+										{% csrf_token %}
+										<button type="submit" class="btn btn-sm btn-outline-danger w-100">-</button>
+									</form>
+									<form action="{% url 'añadir_producto_a_cesta' linea.producto.id 1 %}" method="post" class="flex-fill">
+										{% csrf_token %}
+										<button type="submit" class="btn btn-sm btn-outline-navbar w-100">+</button>
+									</form>
+								</div>
+                            </td>
+                            <td class="text-end fw-semibold">{{ linea.subtotal }} €</td>
+                            <td class="text-center">
+                                <form action="{% url 'eliminar_de_cesta' linea.producto.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3"></td>
+                        <td class="text-end fw-bold">Total:</td>
+                        <td class="text-end fw-bold">{{ cesta.importeTotal }} €</td>
+                        <td class="text-center">
+                            <a href="{% url 'cesta:checkout' %}" class="btn btn-outline-navbar w-100 fw-bold">
+                                Proceder al pago
+                            </a>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% else %}
+        <div class="card shadow-sm border-0">
+            <div class="card-body text-center">
+                <h5 class="card-title text-muted">Tu cesta está vacía</h5>
+                <p class="card-text">Añade productos desde el catálogo para verlos aquí.</p>
+                <a href="{% url 'catalogo' %}" class="btn btn-outline-navbar">Ir al catálogo</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock content %}

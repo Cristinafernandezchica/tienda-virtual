@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inicio | Green Garden{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+
+    <!-- Presentación de la empresa -->
+    <section class="mb-5 text-center">
+        <h1 class="fw-bold text-primary-custom">Bienvenido a Tractor Amarillo</h1>
+        <p class="lead text-muted mt-3">
+            En <strong>Tractor Amarillo</strong> ofrecemos productos agrícolas y de jardinería de calidad, pensados para 
+            profesionales y aficionados que quieren cuidar la tierra. 
+        </p>
+    </section>
+
+    <!-- Top productos -->
+    <h2 class="text-center text-primary-custom mb-4 fw-bold">
+        <hr class="w-75 mx-auto border-primary-custom opacity-75">
+        Productos más vendidos
+    </h2>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+        {% for producto in productos_top %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0 hover-card">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" class="card-img-top" alt="{{ producto.nombre }}">
+                {% else %}
+                    <div class="sin-imagen d-flex align-items-center justify-content-center bg-light" style="height:180px;">
+                        <span class="text-secondary fw-semibold fst-italic">Sin imagen disponible</span>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title text-primary-custom">{{ producto.nombre }}</h5>
+                    <p class="precio-prod ">{{ producto.precio }} €</p>
+                    <p class="card-text"><strong>Vendidos:</strong> {{ producto.vendidos }}</p>
+                    <p class="card-text"><span class="badge badge-navbar">{{ producto.categoria.nombre }}</span></p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-center">
+                    <a href="{% url 'productos:ficha_producto' producto.id %}" class="btn btn-outline-navbar btn-sm">
+                        Ver más
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-center text-muted">No hay productos disponibles todavía.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Acceso al catálogo -->
+    <div class="text-center mt-5 mb-5">
+        <a href="/catalogo/" class="btn badge-navbar mt-20">Explorar catálogo completo</a>
+    </div>
+</div>
+{% endblock %}

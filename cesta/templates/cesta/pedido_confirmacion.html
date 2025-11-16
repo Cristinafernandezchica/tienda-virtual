@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Confirmación de Pedido" %}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-lg border-success">
+        <div class="card-body p-5">
+            <h1 class="text-success mb-4">{% translate "¡Pedido Confirmado!" %} ✅</h1>
+            <p class="lead">
+                {% translate "Tu pedido ha sido procesado y está listo para ser preparado." %}
+            </p>
+
+            <div class="alert alert-info mt-4">
+                <strong>{% translate "Método de Pago:" %}</strong> {{ pedido.pago.metodo }}<br>
+                {% if pedido.pago.metodo == 'CONTRAREEMBOLSO' %}
+                    {% translate "Pagarás" %}: <strong>{{ pedido.importe }} €</strong> {% translate "al recibir el pedido." %}
+                {% else %}
+                    {% translate "Importe pagado:" %} <strong>{{ pedido.importe }} €</strong>
+                {% endif %}
+            </div>
+
+            <h4 class="mt-5 mb-3 text-secondary border-bottom pb-2">
+                {% translate "Detalles del Pedido" %} #{{ pedido.id }}
+            </h4>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>{% translate "Estado Actual" %}:</strong> <span class="badge bg-warning">{{ pedido.estado }}</span></p>
+                    <p><strong>{% translate "Fecha" %}:</strong> {{ pedido.fechaPedido|date:"d M Y H:i" }}</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p><strong>{% translate "Importe Total" %}:</strong> <span class="fs-4 text-success">{{ pedido.importe }} €</span></p>
+                    <p class="text-muted small">{% translate "El pago se ha registrado como pendiente." %}</p>
+                </div>
+            </div>
+
+            <h5 class="mt-4">{% translate "Productos Incluidos" %}</h5>
+            <ul class="list-group mb-4">
+                {% for linea in pedido.cesta_asociada.producto_cestas.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ linea.producto.nombre }} (x{{ linea.cantidad }})
+                        <span class="badge bg-light text-dark">{{ linea.subtotal }} €</span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% if pedido.tipoEntrega == "DOMICILIO" and pedido.dirEntrega %}
+            <h5 class="mt-4">{% translate "Dirección de Entrega" %}</h5>
+            <p>
+                {{ pedido.dirEntrega.direccion }}<br>
+                {{ pedido.dirEntrega.codigoPostal }} {{ pedido.dirEntrega.ciudad }}<br>
+                {{ pedido.dirEntrega.pais }}
+            </p>
+            {% elif pedido.tipoEntrega == "PUNTO_RECOGIDA" and pedido.puntoRecogida %}
+            <h5 class="mt-4">{% translate "Punto de Recogida" %}</h5>
+            <p>
+                {{ pedido.puntoRecogida.direccion }}<br>
+                {{ pedido.puntoRecogida.codigoPostal }} {{ pedido.puntoRecogida.ciudad }}<br>
+                {{ pedido.puntoRecogida.pais }}<br>
+                {% translate "Horario:" %} {{ pedido.puntoRecogida.horario }}
+            </p>
+            {% endif %}
+
+            <a href="{% url 'inicio' %}" class="btn btn-primary mt-3">
+                {% translate "Volver a la tienda" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

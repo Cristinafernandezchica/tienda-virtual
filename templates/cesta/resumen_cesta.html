@@ -1,0 +1,66 @@
+{% load static %}
+
+<div class="resumen-cesta-container">
+
+{% if cesta_resumen and cesta_resumen.producto_cestas.exists %}
+    <ul class="list-unstyled mb-0">
+        {% for item in cesta_resumen.producto_cestas.all %}
+            <li class="d-flex align-items-center mb-3 p-2 rounded resumen-item">
+                
+                <!-- Imagen del producto -->
+                {% if item.producto.imagen %}
+                    <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" class="resumen-img">
+                {% else %}
+                    <img src="{% static 'images/no-imagen.png' %}" 
+                         alt="Sin imagen"
+                         class="resumen-img">
+                {% endif %}
+
+                <!-- Información -->
+                <div class="flex-grow-1 ms-2">
+                    <div class="fw-semibold text-navbar">{{ item.producto.nombre }}</div>
+                    <small class="text-muted">
+                        {{ item.cantidad }} x {{ item.producto.precio }} € = <strong>{{ item.subtotal }} €</strong>
+                    </small>
+                </div>
+
+                <!-- Controles -->
+                <div class="ms-2 text-center resumen-controles">
+
+                    <div class="d-flex justify-content-between w-100 gap-1">
+                        <!-- Quitar -->
+                        <form method="post" action="{% url 'cesta:quitar_1de_cesta' item.producto.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm resumen-btn-minus">−</button>
+                        </form>
+
+                        <!-- Añadir -->
+                        <form method="post" action="{% url 'cesta:añadir_producto_a_cesta' item.producto.id 1 %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm resumen-btn-plus">+</button>
+                        </form>
+                    </div>
+                    <!-- papelera centrada debajo -->
+                    <div class="mt-2">
+                        <form method="post" action="{% url 'cesta:eliminar_de_cesta' item.producto.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm resumen-btn-trash">🗑</button>
+                        </form>
+                    </div>
+                </div>
+
+
+
+            </li>
+        {% endfor %}
+    </ul>
+
+    <p class="mt-2 fw-bold text-end text-navbar">
+        Total: {{ cesta_resumen.importeTotal }} €
+    </p>
+
+{% else %}
+    <p class="text-muted">La cesta está vacía.</p>
+{% endif %}
+
+</div>

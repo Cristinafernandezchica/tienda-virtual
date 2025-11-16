@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Ventas | Tractor Amarillo{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h3 class="text-black fw-bold mb-4 text-center">Gestión de Ventas</h3>
+
+    {% if productos %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for producto in productos %}
+        <div class="col">
+            <div class="card h-100 shadow-sm rounded-3">
+                {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" class="card-img-top object-fit-cover" alt="{{ producto.nombre }}"
+                    style="height: 200px;">
+                {% else %}
+                <div class="card-img-top bg-light text-center d-flex align-items-center justify-content-center"
+                    style="height: 200px; color: #6c757d;">
+                    [Imagen No Disponible]
+                </div>
+                {% endif %}
+
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-navbar fw-bold">{{ producto.nombre }}</h5>
+                    <p class="card-text text-muted small mb-1">
+                        <strong>Stock:</strong> {{ producto.stock }}
+                    </p>
+                    <p class="card-text text-muted small mb-2">
+                        <strong>Unidades vendidas:</strong> {{ producto.vendidos }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="list-group-item text-muted fst-italic text-center py-4">
+        No hay productos con stock disponible.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

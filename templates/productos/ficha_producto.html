@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ producto.nombre }} | Tractor Amarillo{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+
+    <div class="card shadow-sm rounded-4 bg-light overflow-hidden">
+        <div class="row g-0 align-items-center">
+            <!-- Imagen -->
+            <div class="col-md-5 text-center bg-white p-3">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" 
+                         class="img-fluid rounded-3 shadow-sm" style="max-height: 350px; object-fit: cover;">
+                {% else %}
+                    <div class="d-flex justify-content-center align-items-center bg-light text-muted rounded-3" 
+                         style="height: 300px;">
+                        <p class="mb-0 fst-italic">Sin imagen disponible</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Detalles -->
+            <div class="col-md-7">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold text-navbar">{{ producto.nombre }}</h4>
+                    <span class="badge badge-navbar mb-3">{{ producto.categoria.nombre }}</span>
+                    <p class="mb-3">{{ producto.descripcion }}</p>
+
+                    <h3 class="precio mb-3" style="color: black;">{{ producto.precio }} €</h3>
+
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item"><strong>Stock:</strong> {{ producto.stock }}</li>
+                        <li class="list-group-item"><strong>Vendidos:</strong> {{ producto.vendidos }}</li>
+                        <li class="list-group-item"><strong>Fabricante:</strong> {{ producto.fabricante }}</li>
+                    </ul>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <!-- Botón volver -->
+                        <a href="{% url 'catalogo' %}" class="btn btn-outline-secondary w-50">
+                            ← Volver
+                        </a>
+
+                        <!-- Formulario añadir a la cesta -->
+                        <form method="post" action="{% url 'añadir_a_cesta' producto.id %}" class="w-50">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <span class="input-group-text">Cantidad</span>
+                                <input type="number" name="cantidad" value="1" min="1" max="{{ producto.stock }}" class="form-control">
+                                <button class="btn btn-outline-navbar" type="submit">
+                                    <i class="bi bi-cart-plus"></i> Añadir a la cesta
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

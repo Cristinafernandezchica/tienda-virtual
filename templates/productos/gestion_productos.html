@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Productos | Tractor Amarillo{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h3 class="text-black fw-bold mb-4 text-center">Gestión de Productos</h3>
+
+    <div class="card shadow-sm rounded-4 bg-light mb-4">
+        <a href="{% url 'productos:producto_crear' %}" class="btn btn-outline-navbar">
+            <i class="bi bi-plus-circle"></i> Nuevo Producto
+        </a>
+    </div>
+
+    <h4 class="text-secondary fw-bold mb-4 border-bottom pb-2">
+        Productos ({{ productos.count }} en total)
+    </h4>
+
+    {% if productos %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for producto in productos %}
+        <div class="col">
+            <div class="card h-100 shadow-sm rounded-3">
+                {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" class="card-img-top object-fit-cover" alt="{{ producto.nombre }}" style="height: 200px;">
+                {% else %}
+                <div class="card-img-top bg-light text-center d-flex align-items-center justify-content-center" style="height: 200px; color: #6c757d;">
+                    [Imagen No Disponible]
+                </div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-navbar fw-bold">{{ producto.nombre }}</h5>
+                    <p class="card-text text-muted small">
+                        Categoría: {{ producto.categoria.nombre }} | Stock: {{ producto.stock }}
+                    </p>
+                    <p class="card-text flex-grow-1">{{ producto.descripcion|truncatewords:15 }}</p>
+                    <h6 class="fw-bold text-navbar mb-3">{{ producto.precio|floatformat:2 }} €</h6>
+
+                    <!-- Botones de gestión -->
+                    <div class="mt-auto d-flex gap-2">
+                        <a href="{% url 'productos:producto_editar' producto.pk %}" class="btn btn-sm btn-outline-navbar w-50">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <!-- Botón que abre el modal -->
+                        <button type="button" class="btn btn-sm btn-outline-danger w-50"
+                                data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ producto.id }}">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de confirmación -->
+        <div class="modal fade" id="confirmDeleteModal{{ producto.id }}" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+              <div class="modal-header badge-navbar text-white">
+                <h5 class="modal-title">
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i> Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body text-center">
+                <p class="fs-6">
+                  ¿Estás seguro de que deseas eliminar permanentemente el producto:
+                  <strong class="text-danger">"{{ producto.nombre }}"</strong>?
+                </p>
+                <p class="text-muted small">
+                  Esta acción es irreversible y eliminará todos los datos asociados al producto.
+                </p>
+              </div>
+              <div class="modal-footer d-flex justify-content-center gap-2">
+                <form action="{% url 'productos:producto_eliminar' producto.id %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger px-4">
+                    Sí, Eliminar
+                  </button>
+                </form>
+                <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="list-group-item text-muted fst-italic text-center py-4">
+        No hay productos registrados. Usa el botón <strong>Nuevo Producto</strong> para empezar.
+    </div>
+    {% endif %}
+</div>
+{% endblock content %}

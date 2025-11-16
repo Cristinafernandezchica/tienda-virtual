@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmación de Pedido</title>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f6f6f6;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2a7e2a;
+        }
+        .section-title {
+            font-weight: bold;
+            margin-top: 20px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 6px;
+        }
+        .product {
+            margin-bottom: 12px;
+        }
+        .button {
+            margin-top: 25px;
+            display: block;
+            width: fit-content;
+            background: #2a7e2a;
+            color: white !important;
+            padding: 12px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 15px;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>¡Pedido Confirmado! ✅</h1>
+    <p>Hola <strong>{{ pedido.nombre_cliente }}</strong>,</p>
+
+    <p>Tu pedido <strong>#{{ pedido.id }}</strong> ha sido recibido correctamente.</p>
+
+    <p><strong>Estado actual:</strong> {{ pedido.estado }}</p>
+    <p><strong>Fecha:</strong> {{ pedido.fechaPedido|date:"d M Y H:i" }}</p>
+    <p><strong>Importe total:</strong> {{ pedido.importe }} €</p>
+
+    <div class="section-title">Detalles de entrega</div>
+
+    {% if pedido.tipoEntrega == "Domicilio" %}
+        <p>
+            <strong>Dirección:</strong><br>
+            {{ pedido.dirEntrega.direccion }}<br>
+            {{ pedido.dirEntrega.codigoPostal }} - {{ pedido.dirEntrega.ciudad }} - {{ pedido.dirEntrega.pais }}
+        </p>
+    {% else %}
+        <p>
+            <strong>Punto de Recogida:</strong><br>
+            {{ pedido.puntoRecogida.direccion }}<br>
+            {{ pedido.puntoRecogida.codigoPostal }} - {{ pedido.puntoRecogida.ciudad }} - {{ pedido.puntoRecogida.pais }}<br>
+            <strong>Horario:</strong> {{ pedido.puntoRecogida.horario }}
+        </p>
+    {% endif %}
+
+    <div class="section-title">Productos incluidos</div>
+
+    {% for item in pedido.cesta_asociada.producto_cestas.all %}
+        <div class="product">
+            <strong>{{ item.producto.nombre }}</strong> (x{{ item.cantidad }}) — {{ item.subtotal }} €
+        </div>
+    {% endfor %}
+
+    <a class="button" href="{{ pedido_url }}">Ver mi pedido</a>
+
+    <div class="footer">
+        © {{ now|date:"Y" }} Green Garden — Gracias por tu compra.
+    </div>
+
+</div>
+
+</body>
+</html>

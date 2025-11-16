@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Tractor Amarillo{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/ficha_producto.css' %}">
+    
+    <style>
+        /* Clase para la barra de búsqueda más pequeña para administradores */
+        .search-bar-small {
+            max-width: 275px;
+        }
+        
+        /* Clase por defecto para otros usuarios */
+        .search-bar-normal {
+            /* Mantiene el tamaño actual */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar compartida -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+        <div class="container-fluid">
+            <!-- Logo + Nombre como imágenes -->
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="{% static 'images/tractor amarillo solo.png' %}" alt="Logo">
+                <img src="{% static 'images/tractor amarillo letras.png' %}" alt="Nombre Empresa">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Barra de búsqueda con clase condicional -->
+                <form class="d-flex ms-3 {% if user.is_authenticated and user.rol == 'ADMIN' or user.is_superuser %}search-bar-small{% else %}search-bar-normal{% endif %}" 
+                      method="GET" action="{% url 'catalogo' %}">
+                    <input class="form-control me-2" type="search" name="q" placeholder="Buscar..." value="{{ query|default_if_none:'' }}">
+                    <button class="btn btn-outline-navbar" type="submit">
+                        <img src="{% static 'images/lupa_blanca.png' %}" alt="Buscar" style="height:20px;">
+                    </button>
+                </form>
+
+                <ul class="navbar-nav ms-auto">
+                    <!-- Enlaces administrador -->
+                    {% if user.is_authenticated and user.rol == 'ADMIN' or user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:lista_clientes' %}">Clientes registrados</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'productos:gestion_productos' %}">Gestión de productos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'productos:gestion_ventas' %}">Gestión de ventas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:gestion_puntos' %}">Gestión de puntos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'cesta:lista_pedidos_admin' %}">Gestión de pedidos</a>
+                        </li>
+                    {% endif %}
+                    <!-- Enlaces comunes -->
+                    <li class="nav-item"><a class="nav-link" href="/catalogo/">Catálogo</a></li>
+
+                    <!-- Enlaces condicionales según autenticación -->
+                    {% if user.is_authenticated and user.rol != 'ADMIN' and not user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'cesta:mis_pedidos' %}">Mis pedidos</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:datos_entrega' %}">Datos de entrega</a>
+                        </li>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <form method="post" action="{% url 'usuarios:logout' %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link nav-link text-light">Log out</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:login' %}">Log in</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:register' %}">Registrarse</a>
+                        </li>
+                    {% endif %}
+                    <!-- Enlaces comunes -->
+                    <li class="nav-item position-relative">
+                        <a class="nav-link d-flex align-items-center" href="/cesta/" id="cesta-icono">
+                            <img src="{% static 'images/icono_cesta.png' %}" alt="Cesta" title="Cesta" style="height:30px;">
+                        </a>
+
+                        <!-- Este contenedor se mostrará como desplegable -->
+                        <div id="resumen-cesta" class="dropdown-cesta">
+                            {% include 'cesta/resumen_cesta.html' %}
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="container mt-5">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% if messages %}
+    <div id="popup-notificacion" class="popup-notificacion shadow">
+        <span class="popup-text">
+            {% for message in messages %}
+                {{ message }}
+            {% endfor %}
+        </span>
+        <button class="popup-close" onclick="cerrarPopup()">×</button>
+    </div>
+
+    <script>
+        function cerrarPopup() {
+            const popup = document.getElementById("popup-notificacion");
+            popup.classList.remove("mostrar");
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const popup = document.getElementById("popup-notificacion");
+            if (popup) {
+                setTimeout(() => popup.classList.add("mostrar"), 200);
+
+                setTimeout(() => {
+                    popup.classList.remove("mostrar");
+                }, 4000);
+            }
+        });
+    </script>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

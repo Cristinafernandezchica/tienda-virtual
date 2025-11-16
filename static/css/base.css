@@ -1,0 +1,229 @@
+body {
+            padding-top: 40px;
+        }
+        .navbar-custom {
+            background-color: #0d3b66;
+            z-index: 1040;
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 5px;
+        }
+        .dropdown-cesta {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background-color: white;
+        color: black;
+        border: 1px solid #ccc;
+        padding: 10px;
+        width: 300px;
+        z-index: 1050;
+        display: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-radius: 4px;
+        }
+
+        .nav-item:hover .dropdown-cesta {
+            display: block;
+        }
+
+        .dropdown-cesta img {
+            border-radius: 4px;
+        }
+
+        .dropdown-cesta button {
+            min-width: 40px;
+            height: 30px;
+            font-size: 0.9rem;
+        }
+
+        .badge-navbar {
+            background-color: #0d3b66;
+            color: #fff;
+        }
+
+        .badge-navbar:hover,
+        .badge-navbar:focus,
+        .badge-navbar:active {
+            background-color: #0d3b66 !important;
+            color: #fff !important;
+        }
+
+        .precio-prod {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-outline-navbar {
+            color: #0d3b66;              /* color del texto/icono */
+            border-color: #0d3b66;       /* color del borde */
+        }
+
+        .btn-outline-navbar:hover {
+            color: #fff;                 /* texto blanco al hover */
+            background-color: #0d3b66;   /* fondo azul al hover */
+            border-color: #0d3b66;
+        }
+
+        .btn-lupa {
+            width: 55px;             
+            height: 40px;
+            border: 1px solid #0d3b66;
+            background-color: transparent;
+            background-image: url("/static/images/lupa.png"); /* imagen por defecto */
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 24px;    /* tamaño del icono */
+        }
+
+        .btn-lupa:hover {
+            background-image: url("/static/images/lupa_blanca.png"); /* imagen al hover */
+            background-color: #0d3b66; /* opcional: relleno al hover */
+        }
+
+        .navbar .form-control {
+            width: 700px;   /* ajusta el valor a tu gusto */
+            max-width: 100%; /* para que no se rompa en móviles */
+            font-size: 0.9rem;
+        }
+
+        /* Popup elegante de notificación */
+        .popup-notificacion {
+            position: fixed;
+            top: 65px; /* Justo debajo de la navbar */
+            right: 20px;
+            background: white;
+            color: #0d3b66;
+            border-left: 5px solid #0d3b66;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            min-width: 260px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            opacity: 0;
+            transform: translateY(-15px);
+            transition: all 0.35s ease;
+            z-index: 999;
+        }
+
+        /* Cuando se muestra */
+        .popup-notificacion.mostrar {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Botón de cierre (X) */
+        .popup-close {
+            background: transparent;
+            border: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            line-height: 1;
+            color: #0d3b66;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .popup-close:hover {
+            color: #0b3155;
+        }
+
+        /* Texto */
+        .popup-text {
+            flex-grow: 1;
+        }
+
+        /* Tamaño y capacidad de interacción */
+        .dropdown-cesta {
+            width: 390px !important; /* Más ancho */
+            pointer-events: auto !important;
+            z-index: 9999 !important;
+        }
+
+        /* Contenedor del resumen */
+        .resumen-cesta-container {
+            position: relative;
+            z-index: 10000;
+            padding: 8px;
+        }
+
+        /* Tarjeta de cada producto */
+        .resumen-item {
+            background: #ffffff;
+            border-left: 5px solid #0d3b66; /* Igual que notificación */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12); /* misma estética */
+            padding: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .resumen-item:hover {
+            background: #f5faff; /* tono suave */
+            transform: translateX(2px);
+        }
+
+        /* Imagen */
+        .resumen-img {
+            width: 46px;
+            height: 46px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Columna de los controles */
+        .resumen-controles {
+            min-width: 60px;
+        }
+
+        /* Botones coherentes con la estética */
+        .resumen-btn-minus,
+        .resumen-btn-plus,
+        .resumen-btn-trash {
+            width: 32px;
+            height: 28px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            padding: 0;
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        /* Botones */
+        .resumen-btn-minus {
+            background: #d97706;
+        }
+        .resumen-btn-minus:hover {
+            background: #b86504;
+        }
+
+        .resumen-btn-plus {
+            background: #198754;
+        }
+        .resumen-btn-plus:hover {
+            background: #166c44;
+        }
+
+        .resumen-btn-trash {
+            background: #dc3545;
+        }
+        .resumen-btn-trash:hover {
+            background: #b02a37;
+        }
+
+        .resumen-cesta-container p.fw-bold {
+            background: white;
+            border-left: 5px solid #0d3b66;
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+            margin-top: 12px !important;
+        }

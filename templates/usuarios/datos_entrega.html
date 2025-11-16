@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Datos de Entrega | Tractor Amarillo{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h3 class="text-black fw-bold mb-4 text-center">Datos de Entrega</h3>
+    
+    <!-- Formulario para método de pago preferente -->
+    <div class="card shadow-sm rounded-4 bg-light mb-4">
+        <div class="card-body">
+            <h4 class="text-navbar fw-semibold mb-3">Método de pago preferente</h4>
+            <form method="post">
+                {% csrf_token %}
+                {{ form_pago.as_p }}
+                <button type="submit" name="guardar_pago" class="btn btn-outline-navbar w-100 mt-3">
+                    Guardar Método de Pago
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Listado de direcciones -->
+    <div class="card shadow-sm rounded-4 bg-light mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="text-navbar fw-semibold mb-0">Direcciones</h4>
+                <a class="btn btn-outline-navbar" href="{% url 'usuarios:add_direccion' %}">
+                    <i class="bi bi-plus-circle"></i> Añadir Dirección
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for d in direcciones %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ d.direccion }}</strong><br>
+                                <span class="text-muted small">{{ d.ciudad }} ({{ d.codigoPostal }})</span>
+                                {% if user.direccion_preferida and user.direccion_preferida.id == d.id %}
+                                    <span class="badge bg-success ms-2">Preferida</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'usuarios:editar_direccion' d.id %}" class="btn btn-sm btn-outline-navbar" title="Editar">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </a>
+                                <form action="{% url 'usuarios:eliminar_direccion' d.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </button>
+                                </form>
+                                {% if not user.direccion_preferida or user.direccion_preferida.id != d.id %}
+                                    <form action="{% url 'usuarios:preferida_direccion' d.id %}" method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como preferida">
+                                            <i class="bi bi-star"></i> Preferida
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted fst-italic">
+                        No tienes direcciones guardadas.
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Listado de puntos de recogida -->
+    <div class="card shadow-sm rounded-4 bg-light mb-4">
+        <div class="card-body">
+            <h4 class="text-navbar fw-semibold mb-3">Puntos de Recogida</h4>
+            <ul class="list-group list-group-flush">
+                {% for p in puntos %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ p.direccion }}</strong><br>
+                            <span class="text-muted small">{{ p.ciudad }} - {{ p.horario }}</span>
+                            {% if user.punto_recogida_pref and user.punto_recogida_pref.id == p.id %}
+                                <span class="badge bg-success ms-2">Preferido</span>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex gap-2">
+                            {% if not user.punto_recogida_pref or user.punto_recogida_pref.id != p.id %}
+                                <form action="{% url 'usuarios:preferido_punto' p.id %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Marcar como preferido">
+                                        <i class="bi bi-star"></i> Preferido
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted fst-italic">
+                        No hay puntos de recogida disponibles.
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
