@@ -219,7 +219,10 @@ def checkout_view(request):
                 })
 
                 # 8️⃣ Enviar email con tu función utils.py
-                enviar_email_confirmacion(pedido, request, text_content, html_content)
+                try:
+                    enviar_email_confirmacion(pedido, request, text_content, html_content)
+                except Exception as e:
+                    print(f"Error al enviar email: {e}")
 
                 # 9. Actualizar stock si procede
                 if estado_inicial == EstadoPedido.EN_PREPARACION:
