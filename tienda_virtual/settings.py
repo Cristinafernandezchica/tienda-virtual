@@ -82,10 +82,15 @@ WSGI_APPLICATION = 'tienda_virtual.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tractor_amarillo_database',
+        'USER': 'tractor_amarillo_database_user',
+        'PASSWORD': 'Y7E7aosu5pIgURdmnPk7n6chBWa40FAm',
+        'HOST': 'dpg-d4d7f1jipnbc739sh02g-a',
+        'PORT': '5432',
     }
 }
+
 
 
 # Password validation
