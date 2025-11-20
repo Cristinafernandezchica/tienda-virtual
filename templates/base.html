@@ -12,12 +12,13 @@
     <style>
         /* Clase para la barra de búsqueda más pequeña para administradores */
         .search-bar-small {
-            max-width: 275px;
+            max-width: 500px;
         }
         
         /* Clase por defecto para otros usuarios */
         .search-bar-normal {
             /* Mantiene el tamaño actual */
+            max-width: 800px;
         }
     </style>
 </head>
@@ -49,22 +50,22 @@
                 <ul class="navbar-nav ms-auto">
                     <!-- Enlaces administrador -->
                     {% if user.is_authenticated and user.rol == 'ADMIN' or user.is_superuser %}
-                        <li class="nav-item">
+                    <li class="nav-item">
                             <a class="nav-link" href="{% url 'usuarios:lista_clientes' %}">Clientes registrados</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'productos:gestion_productos' %}">Gestión de productos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'productos:gestion_ventas' %}">Gestión de ventas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'usuarios:gestion_puntos' %}">Gestión de puntos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'cesta:lista_pedidos_admin' %}">Gestión de pedidos</a>
-                        </li>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Gestión
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="gestionDropdown">
+                            <li><a class="dropdown-item" href="{% url 'productos:gestion_productos' %}">Gestión de productos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'productos:gestion_ventas' %}">Gestión de ventas</a></li>
+                            <li><a class="dropdown-item" href="{% url 'usuarios:gestion_puntos' %}">Gestión de puntos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'cesta:lista_pedidos_admin' %}">Gestión de pedidos</a></li>
+                        </ul>
+                    </li>
                     {% endif %}
+
                     <!-- Enlaces comunes -->
                     <li class="nav-item"><a class="nav-link" href="/catalogo/">Catálogo</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'company_info' %}">Información</a></li>
