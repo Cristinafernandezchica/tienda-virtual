@@ -1,3 +1,4 @@
+from pyexpat.errors import messages
 from django.db import models, transaction
 from decimal import Decimal
 from productos.models import ProductoCesta
@@ -70,12 +71,17 @@ class Cesta(models.Model):
         # Resolver si nos pasan un id
         if isinstance(producto, int):
             producto = Producto.objects.get(pk=producto)
+            stock = producto.stock # Obtener stock actual
+        if cantidad > stock:
+            raise ValueError("La cantidad solicitada excede el stock disponible")
 
         with transaction.atomic():
             pc_qs = ProductoCesta.objects.select_for_update().filter(cesta=self, producto=producto)
             if pc_qs.exists():
                 pc = pc_qs.first()
                 pc.cantidad = pc.cantidad + cantidad
+                if pc.cantidad > stock:
+                    raise ValueError("La cantidad solicitada excede el stock disponible")
                 pc.subtotal = (Decimal(pc.cantidad) * producto.precio).quantize(Decimal('0.01'))
                 pc.save()
             else:

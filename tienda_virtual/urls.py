@@ -19,6 +19,7 @@ from django.urls import path, include
 from home import views
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('', views.index, name='inicio'),                # Página principal (Escaparate)
@@ -27,7 +28,9 @@ urlpatterns = [
     path('', include('productos.urls')),
     path('usuarios/', include('usuarios.urls', namespace='usuarios')),
     path('cesta/', include('cesta.urls')),  # URLs de la aplicación cesta
-    path('cesta/', include(('cesta.urls', 'cesta'), namespace='cesta'))
+    path('cesta/', include(('cesta.urls', 'cesta'), namespace='cesta')),
+    # Pantalla de información de la empresa (usa `home.views.company_info`)
+    path('company/', views.company_info, name='company_info')
 
 ]
 

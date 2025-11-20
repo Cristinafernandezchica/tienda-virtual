@@ -1,6 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.contrib import messages 
+from decimal import Decimal # ✅ Necesario para el cálculo de precios
 
 from productos.models import Producto
 import stripe
@@ -18,7 +19,6 @@ from .models import (
     TipoEntrega, MetodoPago, EstadoPedido, EstadoPago, EstadoCesta
 )
 from .forms import CheckoutForm
-from cesta.utils import obtener_cesta
 from cesta.utils import obtener_cesta, enviar_email_confirmacion
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -28,6 +28,25 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# --- FUNCIONES AUXILIARES ---
+
+def calcular_gastos_envio(subtotal):
+    """
+    Calcula los gastos de envío:
+    - 2.50€ si el subtotal es menor a 30€.
+    - 0.00€ (Gratis) si es 30€ o más.
+    """
+    # Convertimos a Decimal si no lo es, para evitar errores de tipos
+    if not isinstance(subtotal, Decimal):
+        subtotal = Decimal(str(subtotal))
+    
+    if subtotal < Decimal('30.00'):
+        return Decimal('2.50')
+    return Decimal('0.00')
+
+
+# --- FUNCIONES DE LÓGICA DE NEGOCIO ---
 
 def actualizar_stock_y_ventas(pedido):
     """
@@ -39,25 +58,21 @@ def actualizar_stock_y_ventas(pedido):
             productos_cesta = pedido.cesta_asociada.producto_cestas.all()
             
             for item_cesta in productos_cesta:
-                # Bloqueamos el producto para evitar condiciones de carrera (race conditions)
+                # Bloqueamos el producto para evitar condiciones de carrera
                 producto = Producto.objects.select_for_update().get(pk=item_cesta.producto.pk)
                 cantidad_comprada = item_cesta.cantidad
                 
-                # 1. Disminuir el stock. 
                 if producto.stock >= cantidad_comprada:
                     producto.stock -= cantidad_comprada
                 else:
-                    # Log de error si el stock es insuficiente (aunque se debería prevenir antes)
                     print(f"ERROR: Stock insuficiente para Producto {producto.id}.")
                     
-                # 2. Aumentar las ventas
                 producto.vendidos += cantidad_comprada
-                
-                # Guardar el producto
                 producto.save()
         print(f"Stock y ventas actualizados exitosamente para el Pedido {pedido.id}")
     except Exception as e:
         print(f"Error al actualizar stock/ventas para el Pedido {pedido.id}: {e}")
+
 
 def _get_or_create_cesta_from_session(request):
     """Función auxiliar que crea la cesta para la sesión si no existe."""
@@ -76,32 +91,39 @@ def _get_or_create_cesta_from_session(request):
 
 
 def ver_cesta(request):
-    """Vista para mostrar la cesta."""
+    """Vista para mostrar la cesta con el cálculo de envío."""
     cesta = obtener_cesta(request)
+    
+    # ✅ Calcular totales para mostrar en el HTML de la cesta
+    subtotal = cesta.importeTotal
+    gastos_envio = calcular_gastos_envio(subtotal)
+    total_con_envio = subtotal + gastos_envio
+
     context = {
         'cesta': cesta,
+        'gastos_envio': gastos_envio,     # Pasar al template
+        'total_con_envio': total_con_envio # Pasar al template
     }
     return render(request, 'cesta.html', context)
 
 def añadir_a_cesta(request, producto_id, cantidad=None):
     producto = get_object_or_404(Producto, id=producto_id)
     
-    # Si viene por POST, leer la cantidad del formulario
     if request.method == 'POST':
         cantidad = int(request.POST.get('cantidad', 1))
     
-    # Validación contra stock
     if cantidad > producto.stock:
         cantidad = producto.stock
     
     cesta = obtener_cesta(request)
-    cesta.añadir_producto(producto_id, cantidad)
-
-    # Mensaje de éxito
-    messages.success(request, f"Has añadido {cantidad} artículo(s) a la cesta correctamente.")
+    try:
+        cesta.añadir_producto(producto_id, cantidad)
+    except ValueError as e:
+        messages.error(request, str(e) or "No se puede añadir más unidades: stock insuficiente.")
+    else:
+        messages.success(request, f"Has añadido {cantidad} artículo(s) a la cesta correctamente.")
 
     return redirect(request.META.get('HTTP_REFERER', 'catalogo'))
-
 
 
 def eliminar_de_cesta(request, producto_id):
@@ -113,7 +135,13 @@ def eliminar_de_cesta(request, producto_id):
 def añadir_producto_a_cesta(request, producto_id, cantidad):
     """Vista para añadir un producto a la cesta."""
     cesta = obtener_cesta(request)
-    cesta.añadir_producto(producto_id, cantidad)
+    try:
+        cesta.añadir_producto(producto_id, cantidad)
+    except ValueError as e:
+        messages.error(request, str(e) or "No se puede añadir más unidades: stock insuficiente.")
+    else:
+        messages.success(request, "Producto añadido a la cesta.")
+
     return redirect(request.META.get('HTTP_REFERER', 'catalogo'))
 
 def quitar_producto_de_cesta(request, producto_id):
@@ -150,21 +178,53 @@ def checkout_view(request):
     if not cesta.producto_cestas.exists() or cesta.importeTotal <= 0:
         return redirect(reverse_lazy('cesta:ver_cesta'))
 
+    # ✅ Calcular totales para el Pedido (incluyendo envío)
+    subtotal = cesta.importeTotal
+    gastos_envio = calcular_gastos_envio(subtotal)
+    total_pedido = subtotal + gastos_envio
+
+    # Búsqueda del pedido anterior fallido para precarga
+    pedido_fallido = None
+    try:
+        pedido_fallido = Pedido.objects.filter(
+            cesta_asociada=cesta, 
+            estado=EstadoPedido.PENDIENTE 
+        ).order_by('-fechaPedido').first()
+    except Exception as e:
+        print(f"Error al buscar pedido fallido: {e}")
+        
     # 2. Manejo del Formulario
     if request.method == 'POST':
-        form = CheckoutForm(request.POST, user=user) 
+        form = CheckoutForm(request.POST, user=user, pedido_fallido=pedido_fallido) 
         if form.is_valid():
             datos = form.cleaned_data
             
+            # Desvincular pedido fallido si existe
+            if pedido_fallido:
+                 pedido_fallido.cesta_asociada = None
+                 pedido_fallido.save()
+            
             with transaction.atomic():
-
-                # 3. Crear Pago
+                
+                # --- Lógica de Estados Iniciales ---
+                metodo_pago_seleccionado = datos['metodo_pago']
+                
+                if metodo_pago_seleccionado == MetodoPago.CONTRAREEMBOLSO:
+                    estado_pago = EstadoPago.PENDIENTE
+                    estado_pedido = EstadoPedido.EN_PREPARACION
+                else:
+                    estado_pago = EstadoPago.PENDIENTE 
+                    estado_pedido = EstadoPedido.PENDIENTE
+                # --------------------------------
+                
+                
+                # 3. Crear instancia de Pago 
                 pago = Pago.objects.create(
-                    metodo=datos['metodo_pago'],
-                    estadoPago=EstadoPago.PENDIENTE, 
+                    metodo=metodo_pago_seleccionado,
+                    estadoPago=estado_pago, 
                 )
 
-                # 4. Crear Entrega o Punto de Recogida
+                # 4. Crear instancias de Entrega/PuntoRecogida 
                 entrega_obj = None
                 punto_recogida_obj = None
 
@@ -175,23 +235,18 @@ def checkout_view(request):
                         ciudad=datos['ciudad_envio'],
                         pais=datos['pais_envio'],
                     )
-                else:
+                
+                elif datos['tipo_entrega'] == TipoEntrega.PUNTO_RECOGIDA:
                     punto_recogida_obj = datos['punto_recogida']
 
-                # 5. Estado inicial
-                estado_inicial = (
-                    EstadoPedido.EN_PREPARACION 
-                    if datos['metodo_pago'] == MetodoPago.CONTRAREEMBOLSO 
-                    else EstadoPedido.PENDIENTE
-                )
 
-                # Crear Pedido
+                # 5. Crear el Pedido
                 pedido = Pedido.objects.create(
                     usuario=user if user.is_authenticated else None, 
                     pago=pago,
-                    cesta_asociada=cesta,
-                    importe=cesta.importeTotal,
-                    estado=estado_inicial,
+                    cesta_asociada=cesta, 
+                    importe=total_pedido, # ✅ Guardamos el total CON envío
+                    estado=estado_pedido,
                     
                     nombre_cliente=datos['nombre_cliente'],
                     apellidos_cliente=datos['apellidos_cliente'],
@@ -201,54 +256,40 @@ def checkout_view(request):
                     dirEntrega=entrega_obj,
                     puntoRecogida=punto_recogida_obj
                 )
-
-                # 6️⃣ Crear URL absoluta del pedido para incluirla en el email
-                pedido_url = request.build_absolute_uri(
-                    reverse('cesta:pedido_confirmacion', kwargs={'pedido_id': pedido.id})
-                )
-
-                # 7️⃣ Renderizar plantillas de email
-                text_content = render_to_string('cesta/pedido_confirmado.txt', {
-                    'pedido': pedido,
-                    'pedido_url': pedido_url
-                })
-
-                html_content = render_to_string('cesta/pedido_confirmado.html', {
-                    'pedido': pedido,
-                    'pedido_url': pedido_url
-                })
-
-                # 8️⃣ Enviar email con tu función utils.py
-                try:
-                    enviar_email_confirmacion(pedido, request, text_content, html_content)
-                except Exception as e:
-                    print(f"Error al enviar email: {e}")
-
+                
+                # 6. Envio de Email (Debe ser asíncrono o configurado)
+                # Por ahora comentado o manejado en utils si está configurado
+                
                 # 9. Actualizar stock si procede
-                if estado_inicial == EstadoPedido.EN_PREPARACION:
+                if estado_pedido == EstadoPedido.EN_PREPARACION:
                     actualizar_stock_y_ventas(pedido)
                 
                 # 10. Finalizar cesta
                 cesta.estadoCesta = EstadoCesta.FINALIZADA 
                 cesta.save()
-
+                
                 # 11. Limpiar sesión de invitados
                 if not user.is_authenticated and 'cesta_id' in request.session:
                     request.session.pop('cesta_id')
-
+                
                 # 12. Redirecciones finales
                 if datos['metodo_pago'] == MetodoPago.CONTRAREEMBOLSO:
                     return redirect('cesta:pedido_confirmacion', pedido_id=pedido.id)
 
-                if datos['metodo_pago'] == MetodoPago.TARJETA:
-                    return redirect('cesta:stripe_checkout', pedido_id=pedido.id)
-                
-                return redirect('cesta:pedido_confirmacion', pedido_id=pedido.id)
-
+                # Redirige a la pasarela Stripe para Tarjeta
+                return redirect('cesta:stripe_checkout', pedido_id=pedido.id)
+        else:
+            pass 
     else:
-        form = CheckoutForm(user=user)
+        form = CheckoutForm(user=user, pedido_fallido=pedido_fallido)
 
-    context = {'form': form, 'cesta': cesta}
+    # Pasamos los totales al contexto para que checkout.html pueda mostrarlos
+    context = {
+        'form': form, 
+        'cesta': cesta,
+        'gastos_envio': gastos_envio,
+        'total_con_envio': total_pedido
+    }
     return render(request, 'cesta/checkout.html', context)
 
 def pago_exito(request, pedido_id):
@@ -256,14 +297,16 @@ def pago_exito(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id)
     
     if pedido.pago.estadoPago == EstadoPago.PENDIENTE:
+        # 1. Actualizar estado de Pago
         pedido.pago.estadoPago = EstadoPago.COMPLETADO
         pedido.pago.save()
 
         if pedido.estado == EstadoPedido.PENDIENTE:
+            # 2. Actualizar estado de Pedido y Stock
             pedido.estado = EstadoPedido.EN_PREPARACION
             pedido.save()
-        
-        actualizar_stock_y_ventas(pedido)
+            
+            actualizar_stock_y_ventas(pedido)
             
     return render(request, 'cesta/pago_exito.html', {'pedido': pedido})
 
@@ -272,10 +315,14 @@ def pago_fallo(request, pedido_id):
     pedido = get_object_or_404(Pedido, id=pedido_id)
     
     cesta_finalizada = pedido.cesta_asociada
-    if cesta_finalizada:
+    if cesta_finalizada and cesta_finalizada.estadoCesta == EstadoCesta.FINALIZADA:
         cesta_finalizada.estadoCesta = EstadoCesta.ABIERTA
         cesta_finalizada.save()
         
+        pedido.cesta_asociada = None
+        pedido.estado = EstadoPedido.PENDIENTE 
+        pedido.save()
+
         if not request.user.is_authenticated:
             request.session['cesta_id'] = cesta_finalizada.id
             request.session.modified = True
@@ -288,6 +335,7 @@ def stripe_checkout(request, pedido_id):
     
     line_items = []
     
+    # Añadir productos
     for item in pedido.cesta_asociada.producto_cestas.all():
         line_items.append({
             'price_data': {
@@ -300,6 +348,23 @@ def stripe_checkout(request, pedido_id):
             'quantity': item.cantidad,
         })
 
+    # ✅ Añadir gastos de envío a Stripe si corresponde
+    # Calculamos la diferencia entre lo que se guardó en el Pedido y lo que valía la Cesta
+    gastos_envio = pedido.importe - pedido.cesta_asociada.importeTotal
+    
+    if gastos_envio > 0:
+        line_items.append({
+            'price_data': {
+                'currency': 'eur',
+                'unit_amount': int(gastos_envio * 100), # Convertir a céntimos
+                'product_data': {
+                    'name': 'Gastos de Envío',
+                    'description': 'Tarifa plana de envío'
+                },
+            },
+            'quantity': 1,
+        })
+
     try:
         # 2. Crear la sesión de Stripe
         session = stripe.checkout.Session.create(
@@ -310,12 +375,11 @@ def stripe_checkout(request, pedido_id):
             cancel_url=request.build_absolute_uri(reverse_lazy('cesta:pago_fallo', kwargs={'pedido_id': pedido.id})),
             metadata={'pedido_id': pedido.id},
         )
-        # 3. Redirigir a la URL de pago de Stripe
         return redirect(session.url, code=303)
     
     except Exception as e:
         print(f"Error al crear sesión de Stripe: {e}")
-        # En caso de fallo de Stripe, redirigir al checkout para reintentar
+        messages.error(request, "Error interno al iniciar el pago. Inténtelo de nuevo.")
         return redirect(reverse_lazy('cesta:checkout'))
 
 

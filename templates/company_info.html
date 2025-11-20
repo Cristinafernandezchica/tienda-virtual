@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Información de la Empresa{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1>Información de la Empresa</h1>
+
+            {% if contact_info %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3>{{ contact_info.nombre }}</h3>
+                    {% if contact_info.descripcion %}
+                    <p>{{ contact_info.descripcion }}</p>
+                    {% endif %}
+                    <ul class="list-unstyled">
+                        {% if contact_info.direccion %}<li><strong>Dirección:</strong> {{ contact_info.direccion }}</li>{% endif %}
+                        {% if contact_info.telefono %}<li><strong>Teléfono:</strong> {{ contact_info.telefono }}</li>{% endif %}
+                        {% if contact_info.email %}<li><strong>Email:</strong> {{ contact_info.email }}</li>{% endif %}
+                    </ul>
+
+                    {% if form %}
+                    <hr />
+                    <h5>Editar información (administrador)</h5>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+                {% if form %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4>Crear información de contacto</h4>
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                                {{ field }}
+                                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                {% for error in field.errors %}
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-success">Crear y activar</button>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h3>Tractor Amarillo</h3>
+                        <p>Tienda online especializada en productos agrícolas y herramientas.</p>
+                        <ul class="list-unstyled">
+                            <li><strong>Dirección:</strong> C/ Ejemplo 123, Ciudad</li>
+                            <li><strong>Teléfono:</strong> +34 600 000 000</li>
+                            <li><strong>Email:</strong> info@tractoramarillo.es</li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            
+        </div>
+    </div>
+</div>
+
+{# No client-side storage: backend ContactInfo used. #}
+
+{% endblock %}

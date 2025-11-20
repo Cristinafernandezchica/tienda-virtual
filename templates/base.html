@@ -67,6 +67,7 @@
                     {% endif %}
                     <!-- Enlaces comunes -->
                     <li class="nav-item"><a class="nav-link" href="/catalogo/">Catálogo</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'company_info' %}">Información</a></li>
 
                     <!-- Enlaces condicionales según autenticación -->
                     {% if user.is_authenticated and user.rol != 'ADMIN' and not user.is_superuser %}

@@ -1,13 +1,14 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from usuarios.models import DireccionPref, PuntoRecogidaPref # Modelos de la app usuarios
-# CORRECCIÓN CLAVE: Importamos directamente desde el models.py local
 from .models import TipoEntrega, MetodoPago as PagoMetodoChoices 
+from .models import PuntoRecogida # Necesario para ModelChoiceField
+
 
 class CheckoutForm(forms.Form):
     """
-    Formulario unificado para Checkout. Precarga la dirección del usuario autenticado 
-    en campos de texto editables y valida dinámicamente según el tipo de entrega.
+    Formulario unificado para Checkout. Precarga los datos del usuario logueado 
+    o del último pedido fallido.
     """
     
     # --- Datos del Cliente (Auditoría) ---
@@ -28,63 +29,89 @@ class CheckoutForm(forms.Form):
     )
     
     # --- Campos para Dirección de Envío (Domicilio) ---
-    # Son required=False a nivel de campo, se validan como requeridos en .clean()
     direccion_envio = forms.CharField(max_length=255, required=False, label=_("Dirección"))
     codigoPostal_envio = forms.CharField(max_length=10, required=False, label=_("Código Postal"))
     ciudad_envio = forms.CharField(max_length=100, required=False, label=_("Ciudad"))
     pais_envio = forms.CharField(max_length=100, required=False, label=_("País"))
     
-    # --- Campos para Punto de Recogida ---
+    # --- Campos para Punto de Recogida (Selección de un objeto existente) ---
     punto_recogida = forms.ModelChoiceField(
+        # Usamos PuntoRecogidaPref para listar los puntos elegibles
         queryset=PuntoRecogidaPref.objects.all(),
         required=False,
         label=_("Selecciona un Punto de Recogida"),
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    # punto_direccion = forms.CharField(max_length=255, required=False, label=_("Dirección del Punto"))
-    # punto_codigoPostal = forms.CharField(max_length=10, required=False, label=_("Código Postal del Punto"))
-    # punto_ciudad = forms.CharField(max_length=100, required=False, label=_("Ciudad del Punto"))
-    # punto_pais = forms.CharField(max_length=100, required=False, label=_("País del Punto"))
-    # punto_horario = forms.CharField(max_length=255, required=False, label=_("Horario de Recogida"))
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, user=None, pedido_fallido=None, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Aplicar clase CSS 'form-control' a la mayoría de los widgets de texto/número/select
+        # Aplicar clase CSS 'form-control' a la mayoría de los widgets
         for field in self.fields.values():
             if not isinstance(field.widget, (forms.RadioSelect, forms.CheckboxInput)):
                  field.widget.attrs['class'] = 'form-control'
         
+        datos_iniciales = {}
+
+        # 1. Precarga por Perfil (Solo si el usuario está autenticado)
         if user and user.is_authenticated:
-            # 1. Precargar datos personales del usuario logueado
-            self.fields['nombre_cliente'].initial = user.nombre
-            self.fields['apellidos_cliente'].initial = user.apellidos
-            self.fields['email_cliente'].initial = user.email
+            datos_iniciales['nombre_cliente'] = user.nombre
+            datos_iniciales['apellidos_cliente'] = user.apellidos
+            datos_iniciales['email_cliente'] = user.email
             
-            # 2. Intentar precargar la dirección de envío preferida (editable)
             try:
+                # Intenta usar DireccionPref (asumo que se accede por related_name 'direccion_preferida')
                 dir_pref = user.direccion_preferida
                 if dir_pref:
-                    self.fields['direccion_envio'].initial = dir_pref.direccion
-                    self.fields['codigoPostal_envio'].initial = dir_pref.codigoPostal
-                    self.fields['ciudad_envio'].initial = dir_pref.ciudad
-                    self.fields['pais_envio'].initial = dir_pref.pais
+                    datos_iniciales['direccion_envio'] = dir_pref.direccion
+                    datos_iniciales['codigoPostal_envio'] = dir_pref.codigoPostal
+                    datos_iniciales['ciudad_envio'] = dir_pref.ciudad
+                    datos_iniciales['pais_envio'] = dir_pref.pais
             except DireccionPref.DoesNotExist:
                 pass
-
-            # 3. Intentar precargar el punto de recogida preferido (editable)
+            
             try:
+                # Intenta usar PuntoRecogidaPref
                 punto_pref = user.punto_recogida_pref
                 if punto_pref:
-                    self.fields['punto_recogida'].initial = punto_pref
+                    datos_iniciales['punto_recogida'] = punto_pref # ModelChoiceField espera la instancia
             except PuntoRecogidaPref.DoesNotExist:
                 pass
 
-            # 4. Precargar método de pago preferido
-            if user and user.is_authenticated and user.metodoPagoPref:
-                self.fields['metodo_pago'].initial = user.metodoPagoPref
-        
-        # 4. Sobrescribir el método clean para la validación dinámica
+            if user.metodoPagoPref:
+                datos_iniciales['metodo_pago'] = user.metodoPagoPref
+
+
+        # ⭐️ 2. SOBRESCRIBIR CON DATOS DEL PEDIDO FALLIDO (PRIORIDAD) ⭐️
+        # Si un pedido fallido existe, sus datos son más recientes que la preferencia del perfil.
+        if pedido_fallido:
+            # Datos del Cliente
+            datos_iniciales['nombre_cliente'] = pedido_fallido.nombre_cliente
+            datos_iniciales['apellidos_cliente'] = pedido_fallido.apellidos_cliente
+            datos_iniciales['email_cliente'] = pedido_fallido.email_cliente
+            
+            # Método de Entrega/Pago
+            datos_iniciales['tipo_entrega'] = pedido_fallido.tipoEntrega
+            datos_iniciales['metodo_pago'] = pedido_fallido.pago.metodo
+
+            # Detalles de Entrega
+            if pedido_fallido.dirEntrega:
+                datos_iniciales['direccion_envio'] = pedido_fallido.dirEntrega.direccion
+                datos_iniciales['codigoPostal_envio'] = pedido_fallido.dirEntrega.codigoPostal
+                datos_iniciales['ciudad_envio'] = pedido_fallido.dirEntrega.ciudad
+                datos_iniciales['pais_envio'] = pedido_fallido.dirEntrega.pais
+            
+            # Detalles de Punto de Recogida
+            if pedido_fallido.puntoRecogida:
+                # ModelChoiceField espera el objeto PuntoRecogida (que es un ForeignKey, por lo tanto, una instancia)
+                datos_iniciales['punto_recogida'] = pedido_fallido.puntoRecogida
+
+        # Aplicar datos iniciales
+        for key, value in datos_iniciales.items():
+            if value is not None:
+                self.fields[key].initial = value
+
+        # 3. Sobrescribir el método clean para la validación dinámica
         self.clean = self._conditional_clean
 
     def _conditional_clean(self):
@@ -101,6 +128,7 @@ class CheckoutForm(forms.Form):
                     self.add_error(field, _("Este campo es obligatorio para la entrega a domicilio."))
         
         elif tipo_entrega == TipoEntrega.PUNTO_RECOGIDA:
+            # Solo necesita validar que se haya seleccionado un objeto PointRecogida
             if not cleaned_data.get('punto_recogida'):
                 self.add_error('punto_recogida', _("Debes seleccionar un punto de recogida."))
 

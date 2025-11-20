@@ -63,10 +63,32 @@
                     {% endfor %}
                 </tbody>
                 <tfoot class="table-light">
+                    <!-- Fila del subtotal de Productos -->
                     <tr>
-                        <td colspan="3"></td>
-                        <td class="text-end fw-bold">Total:</td>
-                        <td class="text-end fw-bold">{{ cesta.importeTotal }} €</td>
+                        <td colspan="4" class="text-end fw-bold">Subtotal de Productos:</td>
+                        <td class="text-end fw-bold">{{ cesta.importeTotal|floatformat:2 }} €</td>
+                        <td></td>
+                    </tr>
+                    
+                    <!-- Fila de Gastos de Envío (NUEVO) -->
+                    <tr>
+                        <td colspan="4" class="text-end fw-bold">Gastos de Envío:</td>
+                        <td class="text-end fw-bold">
+                            <strong class="fw-bold"></strong>
+                                {% if gastos_envio > 0 %}
+                                    {{ gastos_envio|floatformat:2 }} €
+                                {% else %}
+                                    GRATIS
+                                {% endif %}
+                            </strong>
+                        </td>
+                        <td></td>
+                    </tr>
+
+                    <!-- Fila del Total Final -->
+                    <tr class="table-secondary">
+                        <td colspan="4" class="text-end fw-bold">TOTAL FINAL:</td>
+                        <td class="text-end fw-bold">{{ total_con_envio|floatformat:2 }} €</td>
                         <td class="text-center">
                             <a href="{% url 'cesta:checkout' %}" class="btn btn-outline-navbar w-100 fw-bold">
                                 Proceder al pago
