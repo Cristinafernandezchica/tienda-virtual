@@ -31,6 +31,13 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 # --- FUNCIONES AUXILIARES ---
 
+
+def build_pedido_url(request, pedido):
+    return request.build_absolute_uri(
+        reverse('cesta:pedido_confirmacion', kwargs={'pedido_id': pedido.id})
+    )
+
+
 def calcular_gastos_envio(subtotal):
     """
     Calcula los gastos de envío:
@@ -257,9 +264,6 @@ def checkout_view(request):
                     puntoRecogida=punto_recogida_obj
                 )
                 
-                # 6. Envio de Email (Debe ser asíncrono o configurado)
-                # Por ahora comentado o manejado en utils si está configurado
-                
                 # 9. Actualizar stock si procede
                 if estado_pedido == EstadoPedido.EN_PREPARACION:
                     actualizar_stock_y_ventas(pedido)
@@ -274,6 +278,15 @@ def checkout_view(request):
                 
                 # 12. Redirecciones finales
                 if datos['metodo_pago'] == MetodoPago.CONTRAREEMBOLSO:
+                    # --------------- ENVÍO EMAIL ----------------
+                    try:
+                        pedido_url = build_pedido_url(request, pedido)
+                        enviar_email_confirmacion(pedido, pedido_url)
+                        print(f"Email de contrareembolso enviado para el pedido {pedido.id}")
+                    except Exception as e:
+                        print("Error enviando email de contrareembolso:", e)
+                    # --------------------------------------------
+
                     return redirect('cesta:pedido_confirmacion', pedido_id=pedido.id)
 
                 # Redirige a la pasarela Stripe para Tarjeta
@@ -292,23 +305,32 @@ def checkout_view(request):
     }
     return render(request, 'cesta/checkout.html', context)
 
+
 def pago_exito(request, pedido_id):
-    """Maneja la devolución exitosa de Stripe."""
     pedido = get_object_or_404(Pedido, id=pedido_id)
-    
+
+    # ---- 1. Cambiar estado del pago ----
     if pedido.pago.estadoPago == EstadoPago.PENDIENTE:
-        # 1. Actualizar estado de Pago
         pedido.pago.estadoPago = EstadoPago.COMPLETADO
         pedido.pago.save()
 
-        if pedido.estado == EstadoPedido.PENDIENTE:
-            # 2. Actualizar estado de Pedido y Stock
-            pedido.estado = EstadoPedido.EN_PREPARACION
-            pedido.save()
-            
-            actualizar_stock_y_ventas(pedido)
-            
+    # ---- 2. Si el pedido estaba pendiente, actualizamos stock y estado ----
+    if pedido.estado == EstadoPedido.PENDIENTE:
+        pedido.estado = EstadoPedido.EN_PREPARACION
+        pedido.save()
+        actualizar_stock_y_ventas(pedido)
+
+        # ---- 3. Envío de email de confirmación ----
+        try:
+            pedido_url = build_pedido_url(request, pedido)
+            enviar_email_confirmacion(pedido, pedido_url)
+            print(f"Email enviado correctamente para el pedido {pedido.id}")
+        except Exception as e:
+            print("Error enviando el email:", e)
+
+    # ---- 4. Renderizar pantalla de éxito ----
     return render(request, 'cesta/pago_exito.html', {'pedido': pedido})
+
 
 def pago_fallo(request, pedido_id):
     """Maneja la cancelación o fallo del pago."""

@@ -10,16 +10,18 @@
     <link rel="stylesheet" href="{% static 'css/ficha_producto.css' %}">
     
     <style>
-        /* Clase para la barra de búsqueda más pequeña para administradores */
-        .search-bar-small {
-            max-width: 500px;
+        .search-bar-guest {
+            max-width: 800px;   /* usuarios no autenticados */
         }
-        
-        /* Clase por defecto para otros usuarios */
-        .search-bar-normal {
-            /* Mantiene el tamaño actual */
-            max-width: 800px;
+
+        .search-bar-auth {
+            max-width: 700px;   /* usuarios autenticados normales */
         }
+
+        .search-bar-admin {
+            max-width: 500px;   /* administradores/superusuarios */
+        }
+
     </style>
 </head>
 <body>
@@ -39,8 +41,18 @@
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <!-- Barra de búsqueda con clase condicional -->
-                <form class="d-flex ms-3 {% if user.is_authenticated and user.rol == 'ADMIN' or user.is_superuser %}search-bar-small{% else %}search-bar-normal{% endif %}" 
-                      method="GET" action="{% url 'catalogo' %}">
+                <form class="d-flex ms-3 
+                    {% if user.is_authenticated %}
+                        {% if user.rol == 'ADMIN' or user.is_superuser %}
+                            search-bar-admin
+                        {% else %}
+                            search-bar-auth
+                        {% endif %}
+                    {% else %}
+                        search-bar-guest
+                    {% endif %}" 
+                    method="GET" action="{% url 'catalogo' %}">
+                    
                     <input class="form-control me-2" type="search" name="q" placeholder="Buscar..." value="{{ query|default_if_none:'' }}">
                     <button class="btn btn-outline-navbar" type="submit">
                         <img src="{% static 'images/lupa_blanca.png' %}" alt="Buscar" style="height:20px;">

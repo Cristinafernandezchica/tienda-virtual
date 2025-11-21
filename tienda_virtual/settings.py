@@ -154,23 +154,13 @@ SITE_ID = 1
 
 STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
-# ==============================
-# Email (desarrollo / producción)
-# LO QUE AHORA MISMO ESTÁ EN COMENTARIO SE CAMBIARÁ CUANDO DESPLEGUEMOS (NO BORRAR)
-# ==============================
 
-# En desarrollo usamos la consola para no depender de SMTP externo.
-# Para producción, cambia EMAIL_BACKEND y rellena los datos SMTP.
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # temporal/desarrollo
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-EMAIL_USE_TLS = False
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+# Uso de sendgrid para envío de emails
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Green Garden <greengardendjango@gmail.com>")
+SENDGRID_SANDBOX_MODE_IN_DEBUG = False
+SENDGRID_ECHO_TO_STDOUT = False
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

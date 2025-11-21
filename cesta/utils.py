@@ -47,12 +47,25 @@ def obtener_cesta(request):
         return cesta
 
 
-def enviar_email_confirmacion(pedido, request, text_content, html_content):
-    email = EmailMultiAlternatives(
-        subject=f"Confirmación de Pedido #{pedido.id}",
-        body=text_content,
-        from_email="greengardendjango@gmail.com",
-        to=[pedido.email_cliente]
+def enviar_email_confirmacion(pedido, pedido_url):
+    subject = f"Confirmación de pedido #{pedido.id} - Green Garden"
+
+    # Render de plantillas
+    text_content = render_to_string(
+        "cesta/pedido_confirmado.txt",
+        {"pedido": pedido, "pedido_url": pedido_url}
     )
+
+    html_content = render_to_string(
+        "cesta/pedido_confirmado.html",
+        {"pedido": pedido, "pedido_url": pedido_url}
+    )
+
+    email = EmailMultiAlternatives(
+        subject=subject,
+        body=text_content,
+        to=[pedido.email_cliente],       # Cambia si tu modelo usa otro campo
+    )
+
     email.attach_alternative(html_content, "text/html")
     email.send()
