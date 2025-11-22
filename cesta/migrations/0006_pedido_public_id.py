@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cesta', '0003_initial'),
+        ('cesta', '0005_alter_pago_metodo'),
     ]
 
     operations = [
