@@ -89,7 +89,12 @@
                     {% endif %}
 
                     <div class="card-body d-flex flex-column">
-                        <h5 class="card-title text-black fw-bold">{{ producto.nombre }}</h5>
+                        <h5 class="card-title text-black fw-bold">
+                            {{ producto.nombre }}
+                            {% if producto.stock == 0 %}
+                                <span class="badge bg-danger ms-2">Agotado</span>
+                            {% endif %}
+                        </h5>                        
                         <p class="card-text"><span class="badge badge-navbar">{{ producto.categoria.nombre }}</span></p>
                         <p class="card-text flex-grow-1">{{ producto.descripcion|truncatewords:15 }}</p>
                         <h4 class="fw-bolder precio-prod mb-3">{{ producto.precio|floatformat:2 }} €</h4>

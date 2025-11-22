@@ -23,7 +23,12 @@
             <!-- Detalles -->
             <div class="col-md-7">
                 <div class="card-body p-4">
-                    <h4 class="fw-bold text-navbar">{{ producto.nombre }}</h4>
+                    <h4 class="fw-bold text-navbar">
+                        {{ producto.nombre }}
+                        {% if producto.stock == 0 %}
+                            <span class="badge bg-danger ms-2">Agotado</span>
+                        {% endif %}
+                    </h4>
                     <span class="badge badge-navbar mb-3">{{ producto.categoria.nombre }}</span>
                     <p class="mb-3">{{ producto.descripcion }}</p>
 

@@ -35,7 +35,12 @@
                 {% endif %}
 
                 <div class="card-body">
-                    <h5 class="card-title text-primary-custom">{{ producto.nombre }}</h5>
+                    <h5 class="card-title text-black fw-bold">
+                        {{ producto.nombre }}
+                        {% if producto.stock == 0 %}
+                            <span class="badge bg-danger ms-2">Agotado</span>
+                        {% endif %}
+                    </h5>                      
                     <p class="precio-prod">{{ producto.precio }} €</p>
                     <p class="card-text"><strong>Vendidos:</strong> {{ producto.vendidos }}</p>
                     <p class="card-text"><span class="badge badge-navbar">{{ producto.categoria.nombre }}</span></p>

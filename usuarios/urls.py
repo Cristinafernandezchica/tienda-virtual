@@ -1,5 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
+
+from usuarios.forms import CustomAuthenticationForm
 from . import views
 
 app_name = 'usuarios'
@@ -7,8 +9,14 @@ app_name = 'usuarios'
 urlpatterns = [
     path('register/', views.register, name='register'),
 
-    # login / logout con plantillas personalizadas:
-    path('login/', auth_views.LoginView.as_view(template_name='usuarios/login.html'), name='login'),
+    path(
+        'login/',
+        auth_views.LoginView.as_view(
+            template_name='usuarios/login.html',
+            authentication_form=CustomAuthenticationForm
+        ),
+        name='login'
+    ),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 
     path('datos-entrega/', views.datos_entrega, name='datos_entrega'),

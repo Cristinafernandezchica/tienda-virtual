@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Usuario, DireccionPref, PuntoRecogidaPref
+from django.contrib.auth import authenticate, get_user_model
 
 
 class UsuarioRegisterForm(UserCreationForm):
@@ -92,3 +93,30 @@ class MetodoPagoForm(forms.ModelForm):
         labels = {
             'metodoPagoPref': 'Método de pago preferente'
         }
+
+Usuario = get_user_model()
+
+class CustomAuthenticationForm(AuthenticationForm):
+    def clean(self):
+        username_or_email = self.cleaned_data.get("username")
+        password = self.cleaned_data.get("password")
+
+        if username_or_email and password:
+            try:
+                # Si lo que escribió es un correo, buscamos el username asociado
+                user_obj = Usuario.objects.get(email=username_or_email)
+                username = user_obj.username
+            except Usuario.DoesNotExist:
+                username = username_or_email
+
+            self.user_cache = authenticate(
+                self.request,
+                username=username,
+                password=password
+            )
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
