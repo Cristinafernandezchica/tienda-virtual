@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404 
+from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import (
@@ -8,6 +8,9 @@ from .models import Producto, Categoria
 from .forms import ProductoForm 
 from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse_lazy
+from django.contrib import messages
+from cesta.models import Pedido, Cesta, EstadoCesta
+from django.db import transaction
 
 
 def admin_required_view(func):
@@ -17,8 +20,8 @@ def admin_required_view(func):
 
 @admin_required_view
 def gestion_ventas(request):
-    """Pantalla de gestión de ventas: lista productos con stock>0 y unidades vendidas."""
-    productos = Producto.objects.filter(stock__gt=0).order_by('-vendidos', 'nombre')
+    """Pantalla de gestión de ventas: lista productos con unidades vendidas."""
+    productos = Producto.objects.order_by('-vendidos', 'nombre')
     return render(request, 'productos/gestion_ventas.html', {'productos': productos})
 
 def ficha_producto(request, producto_id):
@@ -68,8 +71,70 @@ class ProductoUpdateView(AdminRequiredMixin, UpdateView):
     success_url = reverse_lazy('productos:gestion_productos')
 
 class ProductoDeleteView(AdminRequiredMixin, DeleteView):
-    """Elimina un producto."""
+    """Elimina un producto (con lógica condicional)."""
     model = Producto
     template_name = 'productos/producto_confirm_delete.html'
     success_url = reverse_lazy('productos:gestion_productos')
     context_object_name = 'producto'
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        producto = self.object
+        
+        # Importación local para evitar la dependencia circular al inicio del módulo
+        from cesta.models import Pedido, Cesta, EstadoCesta
+        from .models import ProductoCesta 
+
+        # 1. Comprobar si el producto está en algún Pedido (Cesta FINALIZADA asociada a Pedido)
+        en_pedido = Pedido.objects.filter(cesta_asociada__producto_cestas__producto=producto).exists()
+
+        if en_pedido:
+            # No se elimina el producto -> solo stock a 0
+            producto.stock = 0
+            producto.save()
+            
+            cestas_activas = Cesta.objects.filter(producto_cestas__producto=producto,estadoCesta=EstadoCesta.ABIERTA).distinct()
+
+            if cestas_activas.exists():
+                with transaction.atomic():
+                    # Eliminar el producto solo de cestas activas, usando tu lógica propia
+                    for cesta in cestas_activas:
+                        cesta.eliminar_producto(producto)
+
+            messages.success(
+                request,
+                f"El producto '{producto.nombre}' aparece en pedidos finalizados. "
+                "No se elimina del sistema, pero su stock ha sido puesto a 0."
+            )
+            return redirect(self.success_url)
+
+        # 2. ¿Está en alguna cesta activa?
+        cestas_activas = Cesta.objects.filter(producto_cestas__producto=producto,estadoCesta=EstadoCesta.ABIERTA).distinct()
+
+        if cestas_activas.exists():
+            with transaction.atomic():
+                # Eliminar el producto solo de cestas activas, usando tu lógica propia
+                for cesta in cestas_activas:
+                    cesta.eliminar_producto(producto)
+
+                # Guardar nombre para el mensaje
+                producto_nombre = producto.nombre
+
+                # Eliminar el producto del sistema
+                self.object.delete()
+
+            messages.success(
+                request,
+                f"El producto '{producto_nombre}' ha sido eliminado del sistema."
+            )
+            return redirect(self.success_url)
+
+        # 3. Opción por defecto: No está en Pedidos ni Cestas -> Eliminar directamente
+        else:
+            producto_nombre = producto.nombre
+            self.object.delete()
+            messages.success(
+                request, 
+                f"El producto '{producto_nombre}' ha sido eliminado del sistema."
+            )
+            return redirect(self.success_url)

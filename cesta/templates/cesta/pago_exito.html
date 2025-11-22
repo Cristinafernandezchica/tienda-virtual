@@ -12,7 +12,7 @@
 
             <div class="bg-light p-3 rounded mt-4 mb-4 text-start">
                 <h5 class="text-secondary border-bottom pb-2">{% translate "Resumen del Pedido" %}</h5>
-                <p><strong>{% translate "Número de Pedido" %}:</strong> {{ pedido.id }}</p>
+                <p><strong>{% translate "Número de Pedido" %}:</strong> {{ pedido.public_id }}</p>
                 <p><strong>{% translate "Total Pagado" %}:</strong> <span class="text-success fs-4">{{ pedido.importe }} €</span></p>
                 <p><strong>{% translate "Estado" %}:</strong> {{ pedido.estado }}</p>
                 <p class="small text-muted">{% translate "Recibirás un correo electrónico de confirmación con los detalles." %}</p>

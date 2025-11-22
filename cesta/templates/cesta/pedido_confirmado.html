@@ -53,10 +53,10 @@
 
 <div class="container">
 
-    <h1>¡Pedido Confirmado! ✅</h1>
+    <h1>¡Pedido Confirmado!</h1>
     <p>Hola <strong>{{ pedido.nombre_cliente }}</strong>,</p>
 
-    <p>Tu pedido <strong>#{{ pedido.id }}</strong> ha sido recibido correctamente.</p>
+    <p>Tu pedido <strong>#{{ pedido.public_id }}</strong> ha sido recibido correctamente.</p>
 
     <p><strong>Estado actual:</strong> {{ pedido.estado }}</p>
     <p><strong>Fecha:</strong> {{ pedido.fechaPedido|date:"d M Y H:i" }}</p>

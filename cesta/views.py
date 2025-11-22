@@ -34,7 +34,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 
 def build_pedido_url(request, pedido):
     return request.build_absolute_uri(
-        reverse('cesta:pedido_confirmacion', kwargs={'pedido_id': pedido.id})
+        reverse('cesta:pedido_confirmacion', kwargs={'public_id': pedido.public_id})
     )
 
 
@@ -101,7 +101,7 @@ def ver_cesta(request):
     """Vista para mostrar la cesta con el cálculo de envío."""
     cesta = obtener_cesta(request)
     
-    # ✅ Calcular totales para mostrar en el HTML de la cesta
+    # Calcular totales para mostrar en el HTML de la cesta
     subtotal = cesta.importeTotal
     gastos_envio = calcular_gastos_envio(subtotal)
     total_con_envio = subtotal + gastos_envio
@@ -158,13 +158,16 @@ def quitar_producto_de_cesta(request, producto_id):
     return redirect(request.META.get('HTTP_REFERER', 'catalogo'))
 
 # Vistas Dummy
-def pago_externo_simulacion(request, pedido_id):
-    """Simulación de la pasarela de pago."""
-    return render(request, 'cesta/pago_simulacion.html', {'pedido_id': pedido_id})
 
-def pedido_confirmacion(request, pedido_id):
-    """Página final de confirmación del pedido."""
-    pedido = get_object_or_404(Pedido, id=pedido_id)
+
+def pago_externo_simulacion(request, public_id):
+    """Simulación de la pasarela de pago usando public_id."""
+    pedido = get_object_or_404(Pedido, public_id=public_id)
+    return render(request, 'cesta/pago_simulacion.html', {'pedido': pedido})
+
+
+def pedido_confirmacion(request, public_id):
+    pedido = get_object_or_404(Pedido, public_id=public_id)
     return render(request, 'cesta/pedido_confirmacion.html', {'pedido': pedido})
 
 
@@ -184,8 +187,17 @@ def checkout_view(request):
 
     if not cesta.producto_cestas.exists() or cesta.importeTotal <= 0:
         return redirect(reverse_lazy('cesta:ver_cesta'))
+    
+    # Validamos que no haya productos con cantidad mayor al stock disponible
+    for pc in cesta.producto_cestas.all():
+        if pc.cantidad > pc.producto.stock:
+            messages.error(
+                request,
+                f"El producto '{pc.producto.nombre}' no tiene stock suficiente. "
+            )
+            return redirect('cesta:ver_cesta')
 
-    # ✅ Calcular totales para el Pedido (incluyendo envío)
+    # Calcular totales para el Pedido (incluyendo envío)
     subtotal = cesta.importeTotal
     gastos_envio = calcular_gastos_envio(subtotal)
     total_pedido = subtotal + gastos_envio
@@ -252,7 +264,7 @@ def checkout_view(request):
                     usuario=user if user.is_authenticated else None, 
                     pago=pago,
                     cesta_asociada=cesta, 
-                    importe=total_pedido, # ✅ Guardamos el total CON envío
+                    importe=total_pedido, # Guardamos el total CON envío
                     estado=estado_pedido,
                     
                     nombre_cliente=datos['nombre_cliente'],
@@ -263,6 +275,9 @@ def checkout_view(request):
                     dirEntrega=entrega_obj,
                     puntoRecogida=punto_recogida_obj
                 )
+                
+                # 6. Envio de Email (Debe ser asíncrono o configurado)
+                # Por ahora comentado o manejado en utils si está configurado
                 
                 # 9. Actualizar stock si procede
                 if estado_pedido == EstadoPedido.EN_PREPARACION:
@@ -287,7 +302,7 @@ def checkout_view(request):
                         print("Error enviando email de contrareembolso:", e)
                     # --------------------------------------------
 
-                    return redirect('cesta:pedido_confirmacion', pedido_id=pedido.id)
+                    return redirect('cesta:pedido_confirmacion', public_id=pedido.public_id)
 
                 # Redirige a la pasarela Stripe para Tarjeta
                 return redirect('cesta:stripe_checkout', pedido_id=pedido.id)
@@ -306,8 +321,8 @@ def checkout_view(request):
     return render(request, 'cesta/checkout.html', context)
 
 
-def pago_exito(request, pedido_id):
-    pedido = get_object_or_404(Pedido, id=pedido_id)
+def pago_exito(request, public_id):
+    pedido = get_object_or_404(Pedido, public_id=public_id)
 
     # ---- 1. Cambiar estado del pago ----
     if pedido.pago.estadoPago == EstadoPago.PENDIENTE:
@@ -332,9 +347,9 @@ def pago_exito(request, pedido_id):
     return render(request, 'cesta/pago_exito.html', {'pedido': pedido})
 
 
-def pago_fallo(request, pedido_id):
+def pago_fallo(request, public_id):
     """Maneja la cancelación o fallo del pago."""
-    pedido = get_object_or_404(Pedido, id=pedido_id)
+    pedido = get_object_or_404(Pedido, public_id=public_id)
     
     cesta_finalizada = pedido.cesta_asociada
     if cesta_finalizada and cesta_finalizada.estadoCesta == EstadoCesta.FINALIZADA:
@@ -370,7 +385,7 @@ def stripe_checkout(request, pedido_id):
             'quantity': item.cantidad,
         })
 
-    # ✅ Añadir gastos de envío a Stripe si corresponde
+    # Añadir gastos de envío a Stripe si corresponde
     # Calculamos la diferencia entre lo que se guardó en el Pedido y lo que valía la Cesta
     gastos_envio = pedido.importe - pedido.cesta_asociada.importeTotal
     
@@ -393,8 +408,8 @@ def stripe_checkout(request, pedido_id):
             payment_method_types=['card'],
             line_items=line_items,
             mode='payment',
-            success_url=request.build_absolute_uri(reverse_lazy('cesta:pago_exito', kwargs={'pedido_id': pedido.id})),
-            cancel_url=request.build_absolute_uri(reverse_lazy('cesta:pago_fallo', kwargs={'pedido_id': pedido.id})),
+            success_url=request.build_absolute_uri(reverse_lazy('cesta:pago_exito', kwargs={'public_id': pedido.public_id})),
+            cancel_url=request.build_absolute_uri(reverse_lazy('cesta:pago_fallo', kwargs={'public_id': pedido.public_id})),
             metadata={'pedido_id': pedido.id},
         )
         return redirect(session.url, code=303)
@@ -416,22 +431,40 @@ def es_admin(user):
 
 
 @user_passes_test(es_admin)
-def pedido_admin_detalle(request, pedido_id):
-    pedido = get_object_or_404(Pedido, id=pedido_id)
+def pedido_admin_detalle(request, public_id):
+    """Detalle de pedido para administradores usando public_id."""
+    pedido = get_object_or_404(Pedido, public_id=public_id)
 
     if request.method == 'POST':
         nuevo_estado = request.POST.get("estado")
         if nuevo_estado in EstadoPedido.values:
             pedido.estado = nuevo_estado
             pedido.save()
-        return redirect(reverse('cesta:pedido_admin_detalle', kwargs={'pedido_id': pedido.id}))
+
+        # Redirigimos con public_id, NO con el id interno
+        return redirect(reverse('cesta:pedido_admin_detalle', kwargs={'public_id': pedido.public_id}))
 
     return render(request, 'cesta/pedido_admin_detalle.html', {
         'pedido': pedido,
         'Estados': EstadoPedido,
     })
 
+
 @user_passes_test(es_admin)
 def lista_pedidos_admin(request):
     pedidos = Pedido.objects.all().order_by('-fechaPedido')
     return render(request, 'cesta/lista_pedidos_admin.html', {'pedidos': pedidos})
+
+
+def añadir_producto_compra_rapida(request, producto_id):
+    cantidad = int(request.POST.get('cantidad', 1))
+    accion = request.POST.get('accion')
+
+    if accion == 'añadir_producto':
+        return añadir_a_cesta(request, producto_id, cantidad)
+    elif accion == 'compra_rapida':
+        añadir_a_cesta(request, producto_id, cantidad)
+        return redirect('cesta:checkout')
+    else:
+        messages.error(request, "Acción no reconocida.")
+        return redirect('catalogo')

@@ -28,7 +28,7 @@ class Producto(models.Model):
 class ProductoCesta(models.Model):
     cantidad = models.PositiveIntegerField()
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
+    producto = models.ForeignKey(Producto, on_delete=models.SET_NULL, null=True)
     # Referencia a la cesta que contiene este elemento. Usamos una cadena para evitar
     # importaciones circulares entre las apps `productos` y `cesta`.
     cesta = models.ForeignKey('cesta.Cesta', on_delete=models.CASCADE, related_name='producto_cestas', null=True, blank=True)

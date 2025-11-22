@@ -1,6 +1,6 @@
 Hola {{ pedido.nombre_cliente }},
 
-Tu pedido Nº{{ pedido.id }} ha sido recibido correctamente y se encuentra en estado: {{ pedido.estado }}.
+Tu pedido Nº{{ pedido.public_id }} ha sido recibido correctamente y se encuentra en estado: {{ pedido.estado }}.
 
 Fecha del pedido: {{ pedido.fechaPedido|date:"d M Y H:i" }}
 

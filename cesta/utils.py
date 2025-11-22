@@ -48,7 +48,8 @@ def obtener_cesta(request):
 
 
 def enviar_email_confirmacion(pedido, pedido_url):
-    subject = f"Confirmación de pedido #{pedido.id} - Green Garden"
+    # Usar public_id en el asunto
+    subject = f"Confirmación de pedido #{pedido.public_id} - Green Garden"
 
     # Render de plantillas
     text_content = render_to_string(

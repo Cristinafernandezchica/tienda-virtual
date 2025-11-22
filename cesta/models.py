@@ -4,6 +4,14 @@ from decimal import Decimal
 from productos.models import ProductoCesta
 from usuarios.models import PuntoRecogidaPref, Usuario
 from django.utils.translation import gettext_lazy as _
+import secrets
+import string
+
+
+def generar_public_id():
+    caracteres = string.ascii_letters + string.digits
+    # ID aleatorio de 20 caracteres
+    return ''.join(secrets.choice(caracteres) for _ in range(20))
 
 class EstadoCesta(models.TextChoices):
     """Estados posibles para una Cesta."""
@@ -206,6 +214,7 @@ class Pedido(models.Model):
     nombre_cliente = models.CharField(max_length=150) 
     apellidos_cliente = models.CharField(max_length=150) 
     email_cliente = models.EmailField() 
+    public_id = models.CharField(max_length=50, unique=True, default=generar_public_id, editable=False)
     
     dirEntrega = models.ForeignKey(
         'Entrega', 

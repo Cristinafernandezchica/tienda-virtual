@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Pedido #{{ pedido.id }} | Admin{% endblock %}
+{% block title %}Pedido #{{ pedido.public_id }} | Admin{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-  <h2 class="text-navbar fw-bold mb-4">Pedido #{{ pedido.id }}</h2>
+  <h2 class="text-navbar fw-bold mb-4">Pedido #{{ pedido.public_id }}</h2>
 
   <div class="card shadow-sm p-4">
 

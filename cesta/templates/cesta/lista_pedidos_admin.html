@@ -29,7 +29,7 @@
         <tbody>
           {% for pedido in pedidos %}
           <tr>
-            <td><strong>#{{ pedido.id }}</strong></td>
+            <td><strong>#{{ pedido.public_id }}</strong></td>
             <td>{{ pedido.nombre_cliente }} {{ pedido.apellidos_cliente }}</td>
             <td>{{ pedido.email_cliente }}</td>
             <td>{{ pedido.fechaPedido|date:"d/m/Y H:i" }}</td>
@@ -38,7 +38,7 @@
               <span class="badge 
                                     {% if pedido.estado == 'PENDIENTE' %} bg-warning 
                                     {% elif pedido.estado == 'EN_PREPARACION' %} bg-info 
-                                    {% elif pedido.estado == 'ENVIADO' %} bg-primary 
+                                    {% elif pedido.estado == 'EN_ENVIO' %} bg-primary 
                                     {% elif pedido.estado == 'ENTREGADO' %} bg-success 
                                     {% else %} bg-secondary {% endif %}
                                 ">
@@ -46,7 +46,7 @@
               </span>
             </td>
             <td>
-              <a href="{% url 'cesta:pedido_admin_detalle' pedido.id %}" class="btn btn-sm btn-outline-navbar">
+              <a href="{% url 'cesta:pedido_admin_detalle' public_id=pedido.public_id %}" class="btn btn-sm btn-outline-navbar">
                 <i class="bi bi-eye"></i> Ver pedido
               </a>
             </td>
