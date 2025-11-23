@@ -25,4 +25,4 @@ Importe total: {{ pedido.importe }} €
 Puedes ver todos los detalles y el estado actualizado de tu pedido en el siguiente enlace:
 {{ pedido_url }}
 
-Gracias por confiar en Green Garden.
+Gracias por confiar en Tractor Amarillo.
