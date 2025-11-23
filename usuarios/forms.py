@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Usuario, DireccionPref, PuntoRecogidaPref
 from django.contrib.auth import authenticate, get_user_model
+import re
 
 
 class UsuarioRegisterForm(UserCreationForm):
@@ -69,6 +70,40 @@ class DireccionPrefForm(forms.ModelForm):
             'pais': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
+    def clean(self):
+        cleaned_data = super().clean()
+        direccion = cleaned_data.get('direccion')
+        codigo_postal = cleaned_data.get('codigoPostal')
+        ciudad = cleaned_data.get('ciudad')
+        pais = cleaned_data.get('pais')
+
+        # --- Validación Dirección ---
+        if direccion:
+            # Debe contener al menos una letra, un número y una coma, y solo símbolos permitidos
+            if not re.match(r'^(?=.*[A-Za-zÀ-ÿ])(?=.*\d)(?=.*[,])[A-Za-zÀ-ÿ0-9\s.,ºª-]+$', direccion):
+                self.add_error(
+                    'direccion',
+                    "La dirección debe contener al menos una letra, un número y una coma, "
+                    "y solo puede incluir letras, números, espacios, comas, puntos, º, ª o guion."
+                )
+
+        # --- Validación Código Postal ---
+        if codigo_postal:
+            if not re.fullmatch(r'\d{5}', codigo_postal):
+                self.add_error('codigoPostal', "El código postal debe tener exactamente 5 dígitos.")
+
+        # --- Validación Ciudad ---
+        if ciudad:
+            if not re.fullmatch(r'[A-Za-zÀ-ÿ\s]+', ciudad):
+                self.add_error('ciudad', "La ciudad solo puede contener letras y espacios.")
+
+        # --- Validación País ---
+        if pais:
+            if not re.fullmatch(r'[A-Za-zÀ-ÿ\s]+', pais):
+                self.add_error('pais', "El país solo puede contener letras y espacios.")
+
+        return cleaned_data
+
 
 class PuntoRecogidaPrefForm(forms.ModelForm):
     class Meta:
@@ -81,6 +116,40 @@ class PuntoRecogidaPrefForm(forms.ModelForm):
             'pais': forms.TextInput(attrs={'class': 'form-control'}),
             'horario': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        direccion = cleaned_data.get('direccion')
+        codigo_postal = cleaned_data.get('codigoPostal')
+        ciudad = cleaned_data.get('ciudad')
+        pais = cleaned_data.get('pais')
+
+        # --- Validación Dirección ---
+        if direccion:
+            # Debe contener al menos una letra, un número y una coma, y solo símbolos permitidos
+            if not re.match(r'^(?=.*[A-Za-zÀ-ÿ])(?=.*\d)(?=.*[,])[A-Za-zÀ-ÿ0-9\s.,ºª-]+$', direccion):
+                self.add_error(
+                    'direccion',
+                    "La dirección debe contener al menos una letra, un número y una coma, "
+                    "y solo puede incluir letras, números, espacios, comas, puntos, º, ª o guion."
+                )
+
+        # --- Validación Código Postal ---
+        if codigo_postal:
+            if not re.fullmatch(r'\d{5}', codigo_postal):
+                self.add_error('codigoPostal', "El código postal debe tener exactamente 5 dígitos.")
+
+        # --- Validación Ciudad ---
+        if ciudad:
+            if not re.fullmatch(r'[A-Za-zÀ-ÿ\s]+', ciudad):
+                self.add_error('ciudad', "La ciudad solo puede contener letras y espacios.")
+
+        # --- Validación País ---
+        if pais:
+            if not re.fullmatch(r'[A-Za-zÀ-ÿ\s]+', pais):
+                self.add_error('pais', "El país solo puede contener letras y espacios.")
+
+        return cleaned_data
 
 
 class MetodoPagoForm(forms.ModelForm):
