@@ -11,23 +11,14 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from cesta.models import Pedido, Cesta, EstadoCesta
 from django.db import transaction
+from django.db.models import Q # Importado para consultas OR
 
+
+# --- MIXINS Y DECORADORES ---
 
 def admin_required_view(func):
     """Decorator helper that checks usuario rol ADMIN or superuser."""
     return user_passes_test(lambda u: (hasattr(u, 'rol') and u.rol == 'ADMIN') or u.is_superuser, login_url=reverse_lazy('usuarios:login'))(func)
-
-
-@admin_required_view
-def gestion_ventas(request):
-    """Pantalla de gestión de ventas: lista productos con unidades vendidas."""
-    productos = Producto.objects.order_by('-vendidos', 'nombre')
-    return render(request, 'productos/gestion_ventas.html', {'productos': productos})
-
-def ficha_producto(request, producto_id):
-    """Muestra la ficha detallada de un producto."""
-    producto = get_object_or_404(Producto, id=producto_id)
-    return render(request, 'productos/ficha_producto.html', {'producto': producto})
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
@@ -42,17 +33,125 @@ class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     login_url = reverse_lazy('usuarios:login') 
 
 
+# --- VISTAS DE PRODUCTOS ---
+
+@admin_required_view
+def gestion_ventas(request):
+    """Pantalla de gestión de ventas: lista productos con unidades vendidas y permite búsqueda/filtrado."""
+    
+    productos = Producto.objects.all()
+    get_params = request.GET
+    
+    query = get_params.get('q')
+    if query:
+        productos = productos.filter(
+            Q(nombre__icontains=query) | 
+            Q(descripcion__icontains=query) |
+            Q(categoria__nombre__icontains=query) 
+        )
+
+    categoria_id = get_params.get('categoria')
+    if categoria_id:
+        try:
+            productos = productos.filter(categoria_id=int(categoria_id))
+        except ValueError:
+            pass 
+
+    orden = get_params.get('orden')
+    if orden == 'nombre_asc':
+        productos = productos.order_by('nombre')
+    elif orden == 'nombre_desc':
+        productos = productos.order_by('-nombre')
+    elif orden == 'vendidos_asc':
+        productos = productos.order_by('vendidos', 'nombre')
+    elif orden == 'vendidos_desc' or not orden:
+        productos = productos.order_by('-vendidos', 'nombre')
+    
+    context = {
+        'productos': productos,
+        'categorias': Categoria.objects.all().order_by('nombre'), 
+        'query': query, 
+        'categoria_seleccionada': categoria_id, 
+        'orden_seleccionado': orden, 
+    }
+    return render(request, 'productos/gestion_ventas.html', context)
+
+def ficha_producto(request, producto_id):
+    """Muestra la ficha detallada de un producto."""
+    producto = get_object_or_404(Producto, id=producto_id)
+    return render(request, 'productos/ficha_producto.html', {'producto': producto})
+
+
+# --- VISTAS BASADAS EN CLASES (ADMIN) ---
 
 class ProductoListView(AdminRequiredMixin, ListView):
-    """Lista de productos para la gestión interna."""
+    """Lista de productos para la gestión interna con funcionalidad de búsqueda, filtro y ordenamiento."""
     model = Producto
     template_name = 'productos/gestion_productos.html'
     context_object_name = 'productos'
-    ordering = ['nombre'] 
+    
+    # Eliminamos 'ordering' aquí, ya que lo gestionaremos en get_queryset
+
+    def get_queryset(self):
+        """
+        Sobrescribe para aplicar la lógica de búsqueda, filtro por categoría y ordenamiento.
+        """
+        queryset = super().get_queryset()
+        get_params = self.request.GET
+        
+        # 1. Búsqueda por texto (q)
+        query = get_params.get('q')
+        if query:
+            # Filtra por nombre, descripción o nombre de categoría (usando __icontains para ser insensible a mayúsculas/minúsculas)
+            queryset = queryset.filter(
+                Q(nombre__icontains=query) | 
+                Q(descripcion__icontains=query) |
+                Q(categoria__nombre__icontains=query) 
+            )
+
+        # 2. Filtrado por Categoría
+        categoria_id = get_params.get('categoria')
+        if categoria_id:
+            try:
+                # Si el ID es válido, filtramos por la categoría
+                queryset = queryset.filter(categoria_id=int(categoria_id))
+            except ValueError:
+                # Ignoramos si el ID de categoría no es un número válido
+                pass
+
+        # 3. Ordenamiento
+        orden = get_params.get('orden')
+        if orden:
+            if orden == 'nombre_asc':
+                queryset = queryset.order_by('nombre')
+            elif orden == 'nombre_desc':
+                queryset = queryset.order_by('-nombre')
+            elif orden == 'stock_asc':
+                queryset = queryset.order_by('stock')
+            elif orden == 'stock_desc':
+                queryset = queryset.order_by('-stock')
+        else:
+            # Orden por defecto: nombre ascendente
+            queryset = queryset.order_by('nombre')
+
+        return queryset
 
     def get_context_data(self, **kwargs):
+        """
+        Sobrescribe para pasar categorías, el término de búsqueda y los filtros seleccionados 
+        a la plantilla para mantener el estado.
+        """
         context = super().get_context_data(**kwargs)
+        get_params = self.request.GET
+        
+        # Pasamos todas las categorías para el select/dropdown
         context['categorias'] = Categoria.objects.all().order_by('nombre')
+        
+        # Pasar los valores seleccionados para mantener el estado del formulario
+        context['query'] = get_params.get('q', None) 
+        context['categoria_seleccionada'] = get_params.get('categoria', None)
+        context['orden_seleccionado'] = get_params.get('orden', None)
+        
         return context
 
 
@@ -93,13 +192,15 @@ class ProductoDeleteView(AdminRequiredMixin, DeleteView):
             producto.stock = 0
             producto.save()
             
+            # Buscar cestas abiertas (activas) que contengan el producto para limpiarlas
             cestas_activas = Cesta.objects.filter(producto_cestas__producto=producto,estadoCesta=EstadoCesta.ABIERTA).distinct()
 
             if cestas_activas.exists():
                 with transaction.atomic():
-                    # Eliminar el producto solo de cestas activas, usando tu lógica propia
+                    # Eliminar el producto solo de cestas activas
                     for cesta in cestas_activas:
-                        cesta.eliminar_producto(producto)
+                        # Asume que tu modelo Cesta tiene un método 'eliminar_producto'
+                        cesta.eliminar_producto(producto) 
 
             messages.success(
                 request,
@@ -113,7 +214,7 @@ class ProductoDeleteView(AdminRequiredMixin, DeleteView):
 
         if cestas_activas.exists():
             with transaction.atomic():
-                # Eliminar el producto solo de cestas activas, usando tu lógica propia
+                # Eliminar el producto solo de cestas activas
                 for cesta in cestas_activas:
                     cesta.eliminar_producto(producto)
 

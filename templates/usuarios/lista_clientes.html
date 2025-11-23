@@ -1,53 +1,75 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Clientes registrados | Green Garden{% endblock %}
+{% block title %}Gestión de Clientes | Green Garden{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="card shadow-sm rounded-4 bg-light">
-        <div class="card-body">
-            <!-- Título -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="text-navbar fw-semibold mb-0 ">Clientes registrados</h4>
-            </div>
 
-            <!-- Tabla de clientes -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="badge-navbar text-white">
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Email</th>
-                            <th>Nombre completo</th>
-                            <th>Método de pago</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cliente in clientes %}
-                            <tr>
-                                <td><strong>{{ cliente.username }}</strong></td>
-                                <td>{{ cliente.email }}</td>
-                                <td>{{ cliente.nombre }} {{ cliente.apellidos }}</td>
-                                <td>
-                                    {% if cliente.metodoPagoPref %}
-                                        <span class="badge bg-success">{{ cliente.get_metodoPagoPref_display }}</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">No indicado</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted fst-italic py-4">
-                                    No hay clientes registrados todavía.
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+<div class="container my-5">
+
+    <!-- Título -->
+    <div class="card shadow-sm rounded-4 bg-light mb-4">
+        <div class="card-body">
+            <h4 class="text-navbar fw-semibold mb-0 text-center">Gestión de Clientes</h4>
         </div>
     </div>
+
+    <!-- Tabla -->
+    <div class="card shadow-sm rounded-4 bg-light">
+        <div class="card-body p-0">
+
+            <table class="table table-hover align-middle mb-0">
+                
+                <!-- CABECERA -->
+                <thead class="badge-navbar text-white">
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Email</th>
+                        <th>Nombre completo</th>
+                        <th>Método de pago</th>
+                        <th>Historial de pedidos</th>
+                    </tr>
+                </thead>
+
+                <!-- CUERPO -->
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td><strong>{{ cliente.username }}</strong></td>
+                        <td>{{ cliente.email }}</td>
+                        <td>{{ cliente.nombre }} {{ cliente.apellidos }}</td>
+
+                        <td>
+                            {% if cliente.metodoPagoPref %}
+                                <span class="badge bg-success">
+                                    {{ cliente.get_metodoPagoPref_display }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">No indicado</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a href="{% url 'usuarios:historial_pedidos_usuario' cliente.id %}"
+                               class="btn btn-sm btn-outline-navbar">
+                                <i class="bi bi-clock-history"></i> Ver historial de pedidos
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted fst-italic py-4">
+                            No hay clientes registrados todavía.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
 </div>
+
 {% endblock %}

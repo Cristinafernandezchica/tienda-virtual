@@ -227,3 +227,39 @@ body {
             box-shadow: 0 4px 15px rgba(0,0,0,0.12);
             margin-top: 12px !important;
         }
+
+        /* === TARJETAS DE CATEGORÍA EN CATÁLOGO === */
+        .categoria-card {
+            background: #ffffff;
+            border-left: 5px solid #0d3b66;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+            padding: 18px;
+            text-align: center;
+            transition: all 0.25s ease;
+            height: 100%;
+        }
+
+        .categoria-card:hover {
+            background: #f5faff;
+            transform: translateY(-4px);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.18);
+        }
+
+        .categoria-imagen {
+            max-height: 90px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .categoria-nombre {
+            color: #0d3b66;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-top: 6px;
+        }
+
+        .categoria-link {
+            text-decoration: none;
+        }

@@ -5,6 +5,7 @@ from django.contrib import messages
 
 from .forms import UsuarioRegisterForm, DireccionPrefForm, PuntoRecogidaPrefForm, MetodoPagoForm
 from .models import DireccionPref, PuntoRecogidaPref, Usuario
+from cesta.models import Pedido
 
 def es_admin(user):
     return user.is_authenticated and user.rol == 'ADMIN'
@@ -213,3 +214,15 @@ def preferido_punto(request, id):
     
     messages.success(request, f"Punto de recogida '{punto.direccion}' marcado como preferido.")
     return redirect('usuarios:datos_entrega')
+
+
+@user_passes_test(es_admin)
+def historial_pedidos_usuario(request, user_id):
+    usuario = get_object_or_404(Usuario, id=user_id)
+
+    pedidos = Pedido.objects.filter(usuario=usuario).order_by('-fechaPedido')
+
+    return render(request, 'usuarios/historial_pedidos_usuario.html', {
+        'usuario': usuario,
+        'pedidos': pedidos
+    })

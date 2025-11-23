@@ -29,6 +29,7 @@ urlpatterns = [
     path('puntos-recogida/<int:id>/editar/', views.editar_punto, name='editar_punto'),
     path('puntos-recogida/<int:id>/eliminar/', views.eliminar_punto, name='eliminar_punto'),  
     path('punto/<int:id>/preferido/', views.preferido_punto, name='preferido_punto'),
+    path('cliente/<int:user_id>/pedidos/', views.historial_pedidos_usuario, name='historial_pedidos_usuario'),
 
 
     # Administración: Lista de clientes registrados

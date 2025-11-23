@@ -41,8 +41,10 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'home',
     'productos',
-    'usuarios',            # tu app para usuarios,
-    'cesta'
+    'usuarios',
+    'cesta',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -143,6 +145,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Para que coja la carpeta media a la hora de introducir imágenes
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Configuración de Cloudinary
+CLOUDINARY_STORAGE = {
+    "CLOUD_NAME": os.getenv("CLOUDINARY_CLOUD_NAME"),
+    "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
+    "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
+}
+
+# Usar Cloudinary para archivos multimedia
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 AUTH_USER_MODEL = 'usuarios.Usuario'  # <-- ojo: definir antes de la primera migración
 

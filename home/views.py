@@ -9,8 +9,11 @@ from productos.models import Producto, Categoria
 def index(request):
     """Muestra los productos más vendidos en la página principal."""
     productos_top = Producto.objects.order_by('-vendidos')[:10]
+    categorias = Categoria.objects.all().order_by('nombre')
+    
     contexto = {
-        'productos_top': productos_top
+        'productos_top': productos_top,
+        'categorias': categorias,
     }
     return render(request, 'index.html', contexto)
 

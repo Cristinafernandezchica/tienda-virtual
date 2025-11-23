@@ -13,8 +13,62 @@
         </a>
     </div>
 
+    <div class="mb-4 p-3 rounded-3 shadow-sm bg-light">
+        <form method="GET" action="{% url 'productos:gestion_productos' %}"> 
+            
+            <div class="input-group mb-3">
+                <input type="text" name="q" class="form-control" 
+                       placeholder="Buscar por nombre, descripción o categoría..." 
+                       value="{{ query|default_if_none:'' }}">
+                <button class="btn btn-outline-navbar" type="submit">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
+
+            <div class="row g-3 align-items-end">
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-navbar">Categoría</label>
+                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                    
+                    <select name="categoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        {% for cat in categorias %}
+                            <option value="{{ cat.id }}" {% if cat.id|stringformat:"s" == categoria_seleccionada %}selected{% endif %}>
+                                {{ cat.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold text-navbar">Ordenar por</label>
+                    <select name="orden" class="form-select">
+                        <option value="" {% if not orden_seleccionado %}selected{% endif %}>Nombre A-Z (Por defecto)</option>
+                        <option value="nombre_asc" {% if orden_seleccionado == 'nombre_asc' %}selected{% endif %}>Nombre A-Z</option>
+                        <option value="nombre_desc" {% if orden_seleccionado == 'nombre_desc' %}selected{% endif %}>Nombre Z-A</option>
+                        <option value="stock_asc" {% if orden_seleccionado == 'stock_asc' %}selected{% endif %}>Stock ↑</option>
+                        <option value="stock_desc" {% if orden_seleccionado == 'stock_desc' %}selected{% endif %}>Stock ↓</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mt-3 justify-content-center">
+                <div class="col-6 col-md-3">
+                    <button type="submit" class="btn btn-outline-navbar w-100">Aplicar Filtros</button>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="{% url 'productos:gestion_productos' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+                </div>
+            </div>
+        </form>
+    </div>
     <h4 class="text-secondary fw-bold mb-4 border-bottom pb-2">
+        {% if query or categoria_seleccionada %}
+        Productos Filtrados ({{ productos.count }} encontrado{{ productos.count|pluralize }})
+        {% else %}
         Productos ({{ productos.count }} en total)
+        {% endif %}
     </h4>
 
     {% if productos %}
@@ -37,12 +91,10 @@
                     <p class="card-text flex-grow-1">{{ producto.descripcion|truncatewords:15 }}</p>
                     <h6 class="fw-bold text-navbar mb-3">{{ producto.precio|floatformat:2 }} €</h6>
 
-                    <!-- Botones de gestión -->
                     <div class="mt-auto d-flex gap-2">
                         <a href="{% url 'productos:producto_editar' producto.pk %}" class="btn btn-sm btn-outline-navbar w-50">
                             <i class="bi bi-pencil"></i> Editar
                         </a>
-                        <!-- Botón que abre el modal -->
                         <button type="button" class="btn btn-sm btn-outline-danger w-50"
                                 data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ producto.id }}">
                             <i class="bi bi-trash"></i> Eliminar
@@ -52,7 +104,6 @@
             </div>
         </div>
 
-        <!-- Modal de confirmación -->
         <div class="modal fade" id="confirmDeleteModal{{ producto.id }}" tabindex="-1" aria-hidden="true">
           <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -89,7 +140,11 @@
     </div>
     {% else %}
     <div class="list-group-item text-muted fst-italic text-center py-4">
-        No hay productos registrados. Usa el botón <strong>Nuevo Producto</strong> para empezar.
+        {% if query or categoria_seleccionada %}
+        No se encontraron productos que coincidan con los criterios de búsqueda o filtrado.
+        {% else %}
+        No hay productos registrados. Usa el botón **Nuevo Producto** para empezar.
+        {% endif %}
     </div>
     {% endif %}
 </div>

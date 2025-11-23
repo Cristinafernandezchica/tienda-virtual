@@ -18,9 +18,12 @@
     </div>
 -->
     <!-- SECCIÓN DE FILTROS -->
-    <div class="mb-4 p-3 rounded-3 shadow-sm bg-light">
-        <form method="GET" action="{% url 'catalogo' %}">
-            <div class="row g-3 align-items-end">
+    <div class="mb-4 p-3 rounded-3 shadow-sm bg-light d-flex justify-content-center">
+        <form method="GET" action="{% url 'catalogo' %}" class="w-100" style="max-width: 1000px;">
+            {% if categoria_seleccionada %}
+                <input type="hidden" name="categoria" value="{{ categoria_seleccionada }}">
+            {% endif %}
+            <div class="row g-3 align-items-end justify-content-center">
                 <!-- Precio mínimo -->
                 <div class="col-md-2">
                     <label class="form-label fw-semibold text-navbar">Precio Mín.</label>
@@ -33,7 +36,7 @@
                     <input type="number" name="precio_max" class="form-control" step="0.01" value="{{ precio_max|default_if_none:'' }}" min="0">
                 </div>
 
-                <!-- Categoría -->
+                <!-- Categoría
                 <div class="col-md-4">
                     <label class="form-label fw-semibold text-navbar">Categoría</label>
                     <select name="categoria" class="form-select" onchange="this.form.submit()">
@@ -45,7 +48,7 @@
                         {% endfor %}
                     </select>
                 </div>
-
+                -->
                 <!-- Orden -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold text-navbar">Ordenar por</label>
@@ -60,7 +63,7 @@
             </div>
 
             <!-- Botones -->
-            <div class="row mt-3">
+            <div class="row mt-3 justify-content-center">
                 <div class="col-6">
                     <button type="submit" class="btn btn-outline-navbar w-100">Aplicar</button>
                 </div>
@@ -71,12 +74,34 @@
         </form>
     </div>
 
+    <!-- Categorias por botones-->
+    <div class="container my-4">
+        <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
+            {% for cat in categorias %}
+            <div class="col justify-content-center">
+                <a href="?categoria={{ cat.id }}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}" 
+                class="categoria-link">
+                    <div class="categoria-card">
+                        {% if cat.imagen %}
+                            <img src="{{ cat.imagen.url }}" class="categoria-imagen img-fluid">
+                        {% endif %}
+                        <div class="categoria-nombre">{{ cat.nombre }}</div>
+                    </div>
+                </a>
+            </div>
+            {% endfor %}
+
+        </div>
+    </div>
+    <h2 class="text-center text-primary-custom mb-4 fw-bold">
+        <hr class="w-75 mx-auto border-primary-custom opacity-75">
+    </h2>
 
     
     <!-- RESULTADOS DE PRODUCTOS -->
     {% if productos %}
         <h3 class="mb-4 text-secondary fs-6">Mostrando {{ productos.count }} producto{{ productos.count|pluralize }}</h3>
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             {% for producto in productos %}
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 rounded-3 product-card-hover d-flex flex-column">
