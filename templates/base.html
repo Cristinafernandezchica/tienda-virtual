@@ -10,18 +10,23 @@
     <link rel="stylesheet" href="{% static 'css/ficha_producto.css' %}">
     
     <style>
-        .search-bar-guest {
-            max-width: 800px;   /* usuarios no autenticados */
+        .search-bar-guest { max-width: 800px; }
+        .search-bar-auth { max-width: 700px; }
+        .search-bar-admin { max-width: 500px; }
+        html, body {
+            height: 100%;
         }
-
-        .search-bar-auth {
-            max-width: 700px;   /* usuarios autenticados normales */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
-
-        .search-bar-admin {
-            max-width: 500px;   /* administradores/superusuarios */
+        main {
+            flex: 1; /* ocupa todo el espacio disponible */
         }
-
+        footer {
+            margin-top: auto; /* empuja el footer al final */
+        }
     </style>
 </head>
 <body>
@@ -29,7 +34,7 @@
     <!-- Navbar compartida -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
         <div class="container-fluid">
-            <!-- Logo + Nombre como imágenes -->
+            <!-- Logo + Nombre -->
             <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="{% static 'images/tractor amarillo solo.png' %}" alt="Logo">
                 <img src="{% static 'images/tractor amarillo letras.png' %}" alt="Nombre Empresa">
@@ -40,7 +45,7 @@
             </button>
 
             <div class="collapse navbar-collapse" id="navbarNav">
-                <!-- Barra de búsqueda con clase condicional -->
+                <!-- Barra de búsqueda -->
                 <form class="d-flex ms-3 
                     {% if user.is_authenticated %}
                         {% if user.rol == 'ADMIN' or user.is_superuser %}
@@ -63,13 +68,14 @@
                     <!-- Enlaces administrador -->
                     {% if user.is_authenticated and user.rol == 'ADMIN' or user.is_superuser %}
                     <li class="nav-item">
-                            <a class="nav-link" href="{% url 'usuarios:lista_clientes' %}">Clientes registrados</a>
+                        <a class="nav-link" href="{% url 'usuarios:lista_clientes' %}">Clientes registrados</a>
                     </li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'company_info' %}">Información</a></li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-bs-toggle="dropdown">
                             Gestión
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="gestionDropdown">
+                        <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'productos:gestion_productos' %}">Gestión de productos</a></li>
                             <li><a class="dropdown-item" href="{% url 'productos:gestion_ventas' %}">Gestión de ventas</a></li>
                             <li><a class="dropdown-item" href="{% url 'usuarios:gestion_puntos' %}">Gestión de puntos</a></li>
@@ -80,17 +86,11 @@
 
                     <!-- Enlaces comunes -->
                     <li class="nav-item"><a class="nav-link" href="/catalogo/">Catálogo</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'company_info' %}">Información</a></li>
 
-                    <!-- Enlaces condicionales según autenticación -->
+                    <!-- Enlaces condicionales -->
                     {% if user.is_authenticated and user.rol != 'ADMIN' and not user.is_superuser %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'cesta:mis_pedidos' %}">Mis pedidos</a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'usuarios:datos_entrega' %}">Datos de entrega</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'cesta:mis_pedidos' %}">Mis pedidos</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:datos_entrega' %}">Datos de entrega</a></li>
                     {% endif %}
 
                     {% if user.is_authenticated %}
@@ -101,20 +101,15 @@
                             </form>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'usuarios:login' %}">Iniciar sesión</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'usuarios:register' %}">Registrarse</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:login' %}">Iniciar sesión</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'usuarios:register' %}">Registrarse</a></li>
                     {% endif %}
-                    <!-- Enlaces comunes -->
+
+                    <!-- Cesta -->
                     <li class="nav-item position-relative">
                         <a class="nav-link d-flex align-items-center" href="/cesta/" id="cesta-icono">
-                            <img src="{% static 'images/icono_cesta.png' %}" alt="Cesta" title="Cesta" style="height:30px;">
+                            <img src="{% static 'images/icono_cesta.png' %}" alt="Cesta" style="height:30px;">
                         </a>
-
-                        <!-- Este contenedor se mostrará como desplegable -->
                         <div id="resumen-cesta" class="dropdown-cesta">
                             {% include 'cesta/resumen_cesta.html' %}
                         </div>
@@ -126,34 +121,71 @@
 
     <!-- Contenido principal -->
     <main class="container mt-5">
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
+
+    <!-- Footer con información de la empresa -->
+    <footer class="navbar-custom text-light mt-5 py-4">
+    <div class="container text-center">
+        {% if contact_info %}
+        <h5 class="fw-semibold text-navbar">{{ contact_info.nombre }}</h5>
+        {% if contact_info.descripcion %}
+            <p class="mb-2">{{ contact_info.descripcion }}</p>
+        {% endif %}
+        <ul class="list-unstyled mb-0">
+            {% if contact_info.direccion %}
+            <li><i class="bi bi-geo-alt"></i> {{ contact_info.direccion }}</li>
+            {% endif %}
+            {% if contact_info.telefono %}
+            <li><i class="bi bi-telephone"></i> {{ contact_info.telefono }}</li>
+            {% endif %}
+            {% if contact_info.email %}
+            <li><i class="bi bi-envelope"></i> {{ contact_info.email }}</li>
+            {% endif %}
+        </ul>
+        {% else %}
+        <h5 class="fw-semibold text-navbar">Tractor Amarillo</h5>
+        <p class="mb-2">Tienda online especializada en productos agrícolas y herramientas.</p>
+        <ul class="list-unstyled mb-0">
+            <li><i class="bi bi-geo-alt"></i> C/ Ejemplo 123, Ciudad</li>
+            <li><i class="bi bi-telephone"></i> +34 600 000 000</li>
+            <li><i class="bi bi-envelope"></i> info@tractoramarillo.es</li>
+        </ul>
+        {% endif %}
+
+        {% if user.is_authenticated and user.rol == 'ADMIN' %}
+        <div class="mt-2">
+            <a href="{% url 'company_info' %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-pencil"></i> Editar información
+            </a>
+        </div>
+        {% elif user.is_authenticated and user.is_superuser %}
+        <div class="mt-2">
+            <a href="{% url 'company_info' %}" class="btn btn-sm btn-outline-light">
+            <i class="bi bi-pencil"></i> Editar información
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    </footer>
+
 
     {% if messages %}
     <div id="popup-notificacion" class="popup-notificacion shadow">
         <span class="popup-text">
-            {% for message in messages %}
-                {{ message }}
-            {% endfor %}
+            {% for message in messages %}{{ message }}{% endfor %}
         </span>
         <button class="popup-close" onclick="cerrarPopup()">×</button>
     </div>
-
     <script>
         function cerrarPopup() {
-            const popup = document.getElementById("popup-notificacion");
-            popup.classList.remove("mostrar");
+            document.getElementById("popup-notificacion").classList.remove("mostrar");
         }
-
         document.addEventListener("DOMContentLoaded", function() {
             const popup = document.getElementById("popup-notificacion");
             if (popup) {
                 setTimeout(() => popup.classList.add("mostrar"), 200);
-
-                setTimeout(() => {
-                    popup.classList.remove("mostrar");
-                }, 4000);
+                setTimeout(() => popup.classList.remove("mostrar"), 4000);
             }
         });
     </script>
