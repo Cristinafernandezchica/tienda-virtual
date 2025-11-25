@@ -452,8 +452,68 @@ def pedido_admin_detalle(request, public_id):
 
 @user_passes_test(es_admin)
 def lista_pedidos_admin(request):
-    pedidos = Pedido.objects.all().order_by('-fechaPedido')
-    return render(request, 'cesta/lista_pedidos_admin.html', {'pedidos': pedidos})
+    pedidos = Pedido.objects.all()
+
+    # --- Filtros desde GET ---
+    query = request.GET.get("q")
+    estado = request.GET.get("estado")
+    fecha_desde = request.GET.get("fecha_desde")
+    fecha_hasta = request.GET.get("fecha_hasta")
+    importe_min = request.GET.get("importe_min")
+    importe_max = request.GET.get("importe_max")
+    orden = request.GET.get("orden")
+
+    # Búsqueda general (ID, cliente, email)
+    if query:
+        pedidos = pedidos.filter(
+            Q(public_id__icontains=query) |
+            Q(nombre_cliente__icontains=query) |
+            Q(apellidos_cliente__icontains=query) |
+            Q(email_cliente__icontains=query)
+        )
+
+    # Estado
+    if estado:
+        pedidos = pedidos.filter(estado=estado)
+
+    # Fechas
+    if fecha_desde:
+        pedidos = pedidos.filter(fechaPedido__date__gte=parse_date(fecha_desde))
+    if fecha_hasta:
+        pedidos = pedidos.filter(fechaPedido__date__lte=parse_date(fecha_hasta))
+
+    # Importe
+    if importe_min:
+        pedidos = pedidos.filter(importe__gte=importe_min)
+    if importe_max:
+        pedidos = pedidos.filter(importe__lte=importe_max)
+
+    # Orden
+    if orden == "fecha_asc":
+        pedidos = pedidos.order_by("fechaPedido")
+    elif orden == "fecha_desc":
+        pedidos = pedidos.order_by("-fechaPedido")
+    elif orden == "importe_asc":
+        pedidos = pedidos.order_by("importe")
+    elif orden == "importe_desc":
+        pedidos = pedidos.order_by("-importe")
+    else:
+        pedidos = pedidos.order_by("-fechaPedido")  # por defecto
+
+    return render(
+        request,
+        "cesta/lista_pedidos_admin.html",
+        {
+            "pedidos": pedidos,
+            "query": query,
+            "estado_seleccionado": estado,
+            "fecha_desde": fecha_desde,
+            "fecha_hasta": fecha_hasta,
+            "importe_min": importe_min,
+            "importe_max": importe_max,
+            "orden_seleccionado": orden,
+        },
+    )
 
 
 def añadir_producto_compra_rapida(request, producto_id):
