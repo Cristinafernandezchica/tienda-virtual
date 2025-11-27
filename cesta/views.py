@@ -552,9 +552,23 @@ def añadir_producto_compra_rapida(request, producto_id):
 
     if accion == "añadir_producto":
         return añadir_a_cesta(request, producto_id, cantidad)
+        
     elif accion == "compra_rapida":
-        añadir_a_cesta(request, producto_id, cantidad)
-        return redirect("cesta:checkout")
+        producto = get_object_or_404(Producto, id=producto_id)
+        cesta = obtener_cesta(request)
+        
+        try:
+            cesta.añadir_producto(producto_id, cantidad)
+            
+        except ValueError as e:
+            messages.error(
+                request, str(e) or "No se puede añadir más unidades: stock insuficiente."
+            )
+            return redirect("catalogo") 
+        else:
+            messages.success(request, f"Has añadido {cantidad} artículo(s) a la cesta correctamente.")
+            return redirect("cesta:checkout")
+            
     else:
         messages.error(request, "Acción no reconocida.")
         return redirect("catalogo")
