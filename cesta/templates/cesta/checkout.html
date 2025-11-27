@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}Checkout | Paso Final{% endblock %}
+{% block title %}Checkout | Tractor Amarillo{% endblock %}
 
 {% block content %}
 <div class="container my-5">
@@ -85,7 +85,9 @@
                 <!-- Punto de Recogida -->
                 <div id="punto-recogida-fields" class="mt-3 p-3 border rounded bg-white">
                     <div class="mb-3">
-                        {{ form.punto_recogida.label_tag }}
+                        <label for="{{ form.punto_recogida.id_for_label }}" class="form-label fw-bold">
+                            {% translate "Punto de Recogida" %}
+                        </label>
                         {{ form.punto_recogida }}
                         {% if form.punto_recogida.errors %}
                         <div class="text-danger small">{{ form.punto_recogida.errors }}</div>
@@ -111,7 +113,10 @@
                         <div class="text-danger small">{{ form.metodo_pago.errors }}</div>
                     {% endif %}
                 </div>
-                <button type="submit" class="btn btn-outline-navbar w-100 mt-3">{% translate "Confirmar y Pagar" %} ({{ cesta.importeTotal }} €)</button>            
+                <!-- Botón de Pago Final con total calculado -->
+                <button type="submit" class="btn btn-outline-navbar w-100 mt-3">
+                    {% translate "Confirmar y Pagar" %} ({{ total_con_envio|floatformat:2 }} €)
+                </button> 
             </form>
         </div>
         
@@ -120,12 +125,13 @@
             <div class="card shadow-sm rounded-4 bg-light p-3">
                 <h6 class="text-navbar fw-semibold border-bottom pb-2 mb-3">{% trans "Resumen del Pedido" %}</h6>
 
+                <!-- Lista de Productos -->
                 {% for item in cesta.producto_cestas.all %}
                     <div class="mb-2">
                         <strong>{{ item.producto.nombre }}</strong>
                         <div class="text-muted small">
-                            {{ item.cantidad }} x {{ item.producto.precio }} € = 
-                            <strong>{{ item.cantidad|floatformat:2|add:"0"|floatformat:2|floatformat:2|floatformat }}  {{ item.subtotal|floatformat:2 }} €</strong>
+                            {{ item.cantidad }} x {{ item.producto.precio|floatformat:2 }} € = 
+                            <strong>{{ item.subtotal|floatformat:2 }} €</strong>
                         </div>
                     </div>
                 {% empty %}
@@ -134,8 +140,30 @@
 
                 <hr class="my-3">
 
-                <p class="mb-1">{% trans "Total de productos" %}: <strong>{{ cesta.importeTotal|floatformat:2 }} €</strong></p>
-                <p class="text-muted small">{% trans "El costo de envío se calculará en el siguiente paso o en la confirmación." %}</p>
+                <!-- Desglose de Precios -->
+                <p class="mb-1 d-flex justify-content-between">
+                    <span>{% trans "Subtotal de Productos" %}:</span>
+                    <span class="fw-bold">{{ cesta.importeTotal|floatformat:2 }} €</span>
+                </p>
+
+                <p class="mb-2 d-flex justify-content-between">
+                    <span>{% trans "Gastos de Envío" %}:</span>
+                    <span class="fw-bold">
+                        {% if gastos_envio > 0 %}
+                            {{ gastos_envio|floatformat:2 }} €
+                        {% else %}
+                            GRATIS
+                        {% endif %}
+                    </span>
+                </p>
+
+                <hr class="my-3">
+                
+                <p class="mb-0 d-flex justify-content-between fs-5 text-navbar">
+                    <strong>{% trans "TOTAL FINAL" %}:</strong>
+                    <strong class="text-dark">{{ total_con_envio|floatformat:2 }} €</strong>
+                </p>
+                
             </div>
         </div>
     </div>

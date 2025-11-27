@@ -123,9 +123,6 @@ def añadir_a_cesta(request, producto_id, cantidad=None):
     if request.method == "POST":
         cantidad = int(request.POST.get("cantidad", 1))
 
-    if cantidad > producto.stock:
-        cantidad = producto.stock
-
     cesta = obtener_cesta(request)
     try:
         cesta.añadir_producto(producto_id, cantidad)

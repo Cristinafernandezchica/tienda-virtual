@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Catálogo | Tractor Amarillo{% endblock %}
+{% block title %}Catálogo | Green Garden{% endblock %}
 
 {% block content %}
 <div class="container my-5">
 
     <!-- SECCIÓN DE BÚSQUEDA -->
-<!--
+    <!--
     <div class="mb-3 p-3 rounded-3 shadow-sm bg-white">
         <form method="GET" action="{% url 'catalogo' %}">
             <div class="input-group">
@@ -16,10 +16,19 @@
             </div>
         </form>
     </div>
--->
+    -->
     <!-- SECCIÓN DE FILTROS -->
     <div class="mb-4 p-3 rounded-3 shadow-sm bg-light d-flex justify-content-center">
         <form method="GET" action="{% url 'catalogo' %}" class="w-100" style="max-width: 1000px;">
+
+            <div class="input-group mb-3">
+                <input type="text" name="q" class="form-control" 
+                       placeholder="Buscar por nombre, descripción o categoría..." 
+                       value="{{ query|default_if_none:'' }}">
+                <button class="btn btn-outline-navbar" type="submit">
+                    <i class="bi bi-search"></i> Buscar
+                </button>
+            </div>
             {% if categoria_seleccionada %}
                 <input type="hidden" name="categoria" value="{{ categoria_seleccionada }}">
             {% endif %}
@@ -79,7 +88,7 @@
         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4 justify-content-center">
             {% for cat in categorias %}
             <div class="col justify-content-center">
-                <a href="?categoria={{ cat.id }}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}" 
+                <a href="?categoria={{ cat.id }}{% if query %}&q={{ query }}{% endif %}{% if precio_min %}&precio_min={{ precio_min }}{% endif %}{% if precio_max %}&precio_max={{ precio_max }}{% endif %}{% if orden_seleccionado %}&orden={{ orden_seleccionado }}{% endif %}" 
                 class="categoria-link">
                     <div class="categoria-card">
                         {% if cat.imagen %}
