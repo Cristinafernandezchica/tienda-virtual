@@ -32,7 +32,7 @@
       {% for item in pedido.cesta_asociada.producto_cestas.all %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
         <span>{{ item.producto.nombre }} (x{{ item.cantidad }})</span>
-        <span class="fw-semibold">{{ item.importe }} €</span>
+        <span class="fw-semibold">{{ item.subtotal }} €</span>
       </li>
       {% endfor %}
     </ul>
